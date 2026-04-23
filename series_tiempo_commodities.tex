@@ -1,0 +1,1658 @@
+% ============================================================
+%  SERIES DE TIEMPO PARA FINANZAS
+%  ARIMA · SARIMA · Commodities
+%  Universidad Panamericana – Ciudad UP
+%  Documento de estudio completo y compilable
+% ============================================================
+\documentclass[12pt,a4paper]{article}
+
+% ---- Paquetes estándar ----
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[spanish,mexico]{babel}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{geometry}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{longtable}
+\usepackage{hyperref}
+\usepackage{xcolor}
+\usepackage{listings}
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage{float}
+\usepackage{enumitem}
+\usepackage{tcolorbox}
+\usepackage{multirow}
+\usepackage{lmodern}
+
+\geometry{margin=2.5cm}
+
+% ---- Colores personalizados ----
+\definecolor{pyblue}{RGB}{30,100,200}
+\definecolor{pygreen}{RGB}{0,140,0}
+\definecolor{pygray}{RGB}{100,100,100}
+\definecolor{pybg}{RGB}{248,248,248}
+\definecolor{defblue}{RGB}{0,60,130}
+\definecolor{warnred}{RGB}{170,0,0}
+\definecolor{boxbg}{RGB}{240,245,255}
+\definecolor{warnbg}{RGB}{255,245,240}
+
+% ---- Estilo de código Python ----
+\lstdefinestyle{python}{
+  language=Python,
+  basicstyle=\small\ttfamily,
+  keywordstyle=\color{pyblue}\bfseries,
+  commentstyle=\color{pygreen}\itshape,
+  stringstyle=\color{warnred},
+  numberstyle=\tiny\color{pygray},
+  numbers=left,
+  stepnumber=1,
+  frame=single,
+  rulecolor=\color{gray!40},
+  backgroundcolor=\color{pybg},
+  breaklines=true,
+  breakatwhitespace=true,
+  tabsize=4,
+  showstringspaces=false,
+  captionpos=b
+}
+
+% ---- Cajas de definición ----
+\tcbuselibrary{skins,breakable}
+\newtcolorbox{defbox}[1][]{
+  colback=boxbg, colframe=defblue, title=#1,
+  fonttitle=\bfseries\small, breakable, arc=3pt
+}
+\newtcolorbox{warnbox}[1][]{
+  colback=warnbg, colframe=warnred, title=#1,
+  fonttitle=\bfseries\small, breakable, arc=3pt
+}
+
+% ---- Teoremas ----
+\theoremstyle{definition}
+\newtheorem{definicion}{Definición}[section]
+\newtheorem{propiedad}{Propiedad}[section]
+\newtheorem{nota}{Nota}[section]
+
+\hypersetup{colorlinks=true, linkcolor=defblue, urlcolor=pyblue, citecolor=defblue}
+
+% ============================================================
+\begin{document}
+
+\begin{titlepage}
+  \centering
+  \vspace*{2cm}
+  {\large\textbf{UNIVERSIDAD PANAMERICANA}\\
+  CIUDAD UP $\cdot$ FACULTAD DE CIENCIAS EMPRESARIALES}\\[1cm]
+  \rule{\linewidth}{1pt}\\[0.5cm]
+  {\Huge\bfseries Series de Tiempo\\para Finanzas}\\[0.4cm]
+  {\Large ARIMA $\cdot$ SARIMA $\cdot$ Pronóstico\\con Datos de Commodities}\\[0.3cm]
+  \rule{\linewidth}{1pt}\\[1cm]
+  {\large Material de estudio completo}\\
+  {\normalsize De la intuición a la aplicación en mercados de materias primas}\\[2cm]
+  {\normalsize Petróleo crudo (WTI) $\cdot$ Gas natural (Henry Hub) $\cdot$ Oro}\\[1cm]
+  {\normalsize Enero 2005 -- Diciembre 2023}\\[3cm]
+  {\large Verano 2026}
+\end{titlepage}
+
+\tableofcontents
+\newpage
+
+% ============================================================
+\section{Introducción}
+% ============================================================
+
+Este documento es una guía de aprendizaje y repaso de examen sobre modelos
+ARIMA y SARIMA aplicados a series de precios de commodities. El objetivo es
+llevar al lector desde la intuición básica hasta la aplicación práctica con código
+Python real, cubriendo todos los conceptos que aparecen en un curso intermedio
+de series de tiempo para finanzas.
+
+\medskip
+\noindent\textbf{¿Por qué commodities?} Los mercados de materias primas
+(petróleo, gas natural, metales, granos) presentan fenómenos que hacen especialmente interesante el análisis de series de tiempo: tendencias de largo plazo
+impulsadas por oferta y demanda global, estacionalidad climática o de consumo
+(por ejemplo, el gas natural se encarece en invierno), choques geopolíticos, y
+alta volatilidad. Modelar bien estas series tiene consecuencias económicas reales
+en cobertura de riesgos, planificación energética y portafolios de inversión.
+
+\medskip
+\noindent\textbf{Dataset.} Se utiliza un archivo maestro \texttt{commodities\_monthly.csv}
+con tres series mensuales de enero de 2005 a diciembre de 2023 (228 observaciones):
+\begin{itemize}[nosep]
+  \item \texttt{crude\_oil\_wti}: precio del petróleo crudo WTI en USD/barril
+  \item \texttt{natural\_gas\_henryhub}: precio del gas natural Henry Hub en USD/MMBtu
+  \item \texttt{gold\_usd\_oz}: precio del oro en USD/onza
+\end{itemize}
+
+% ============================================================
+\section{Prerrequisitos}
+% ============================================================
+
+El lector debe conocer: estadística descriptiva básica (media, varianza,
+correlación), álgebra lineal elemental (matrices, sistemas de ecuaciones), y los
+fundamentos de Python (manejo de \texttt{pandas}, \texttt{numpy}, y
+\texttt{matplotlib}). No se requiere experiencia previa en series de tiempo.
+
+% ============================================================
+\section{Componentes principales de una serie de tiempo}
+% ============================================================
+
+Una serie de tiempo $\{Y_t\}$ es una secuencia de observaciones ordenadas en el
+tiempo. En la práctica, cualquier serie de precios de commodities puede
+descomponerse conceptualmente en cuatro componentes:
+
+\begin{defbox}[Descomposición de una serie de tiempo]
+\[
+  Y_t = T_t + S_t + C_t + R_t
+\]
+\begin{itemize}[nosep]
+  \item $T_t$: \textbf{Tendencia} --- movimiento sostenido a largo plazo.
+        El precio del oro mostró una tendencia alcista de 2005 a 2011.
+  \item $S_t$: \textbf{Estacionalidad} --- patrón que se repite cada $s$ periodos
+        con amplitud relativamente estable. El gas natural sube en invierno.
+  \item $C_t$: \textbf{Componente cíclica} --- oscilaciones de largo plazo
+        asociadas al ciclo económico (duran varios años). Menos predecible que
+        la estacionalidad; a menudo difícil de separar de la tendencia.
+  \item $R_t$: \textbf{Residuo/irregular} --- variación aleatoria no explicada
+        por los demás componentes.
+\end{itemize}
+\end{defbox}
+
+\noindent\textbf{Nota sobre STL.} La descomposición STL (\textit{Seasonal and
+Trend decomposition using Loess}) separa en la práctica \emph{tres}
+componentes: $Y_t = \hat{T}_t + \hat{S}_t + \hat{R}_t$. El componente cíclico
+suele quedar absorbido en la tendencia estimada.  STL permite que la
+estacionalidad cambie gradualmente en el tiempo, lo que es imposible en la
+descomposición clásica. Ver Sección~\ref{sec:stl}.
+
+\medskip
+\noindent\textbf{Modelos aditivos vs.\ multiplicativos.}
+\begin{itemize}[nosep]
+  \item \textbf{Aditivo}: $Y_t = T_t + S_t + R_t$ (útil si la amplitud de la
+        estacionalidad no crece con el nivel).
+  \item \textbf{Multiplicativo}: $Y_t = T_t \cdot S_t \cdot R_t$, equivalente
+        a aditivo en logaritmos: $\ln Y_t = \ln T_t + \ln S_t + \ln R_t$
+        (común en series de precios).
+\end{itemize}
+
+% ============================================================
+\section{Fundamentos: estacionariedad y procesos base}
+% ============================================================
+
+\subsection{Estacionariedad}
+
+\begin{defbox}[Estacionariedad débil (de covarianza)]
+El proceso $\{Y_t\}_{t \in \mathbb{Z}}$ es \textbf{débilmente estacionario} si:
+\begin{enumerate}[nosep]
+  \item $\mathrm{E}[Y_t] = \mu$ para todo $t$ (media constante),
+  \item $\mathrm{Cov}(Y_t, Y_{t-k}) = \gamma(k)$ depende sólo de $k$, no de $t$
+        (estructura de covarianzas invariante en el tiempo).
+\end{enumerate}
+\end{defbox}
+
+\begin{defbox}[Estacionariedad estricta]
+La distribución conjunta de $(Y_{t_1}, \ldots, Y_{t_m})$ coincide con la de
+$(Y_{t_1+h}, \ldots, Y_{t_m+h})$ para todo $h$ y toda elección de índices.
+La estacionariedad estricta es más fuerte pero difícil de verificar en la práctica.
+\end{defbox}
+
+\noindent\textbf{Intuición.} Una serie estacionaria ``tiene memoria'' pero no
+``camina'' hacia ningún lado: sus propiedades estadísticas son estables en el
+tiempo. Los \emph{log-retornos} del petróleo ($r_t = \ln P_t - \ln P_{t-1}$)
+suelen ser estacionarios; los \emph{log-precios} ($\ln P_t$) generalmente no lo
+son.
+
+\subsection{Operador de rezago y diferenciación}
+
+\begin{defbox}[Operador de rezago $B$]
+\[
+  B Y_t = Y_{t-1}, \quad B^k Y_t = Y_{t-k}, \quad (1-B)Y_t = \Delta Y_t = Y_t - Y_{t-1}.
+\]
+La diferencia estacional de orden $s$ es $\Delta_s Y_t = (1-B^s)Y_t = Y_t - Y_{t-s}$.
+\end{defbox}
+
+\subsection{Ruido blanco}
+
+\begin{defbox}[Ruido blanco $\varepsilon_t \sim WN(0,\sigma^2)$]
+Una secuencia $\{\varepsilon_t\}$ es ruido blanco si:
+$\mathrm{E}[\varepsilon_t]=0$, $\mathrm{Var}(\varepsilon_t)=\sigma^2 < \infty$,
+y $\mathrm{Cov}(\varepsilon_t, \varepsilon_s)=0$ para $t \neq s$.
+\end{defbox}
+
+\noindent El ruido blanco es el bloque constructor de todos los modelos. Si los
+residuos de un modelo ajustado son ruido blanco, el modelo capturó toda la
+estructura predecible de la serie.
+
+\subsection{Procesos AR, MA y ARMA}
+
+\begin{defbox}[AR($p$) --- Autorregresivo]
+\[
+  Y_t = \varphi_1 Y_{t-1} + \varphi_2 Y_{t-2} + \cdots + \varphi_p Y_{t-p} + \varepsilon_t
+  = \varphi_p(B)^{-1}\Theta(B)\varepsilon_t.
+\]
+El valor actual depende de sus $p$ valores pasados más un error.
+\textbf{Condición de estacionariedad}: las raíces del polinomio
+$\Phi(z) = 1 - \varphi_1 z - \cdots - \varphi_p z^p$ deben estar \emph{fuera}
+del círculo unitario.
+\end{defbox}
+
+\begin{defbox}[MA($q$) --- Promedio móvil]
+\[
+  Y_t = \varepsilon_t + \theta_1 \varepsilon_{t-1} + \cdots + \theta_q \varepsilon_{t-q}.
+\]
+El valor actual es una combinación lineal de errores pasados.
+\textbf{Condición de invertibilidad}: las raíces de
+$\Theta(z) = 1 + \theta_1 z + \cdots + \theta_q z^q$ deben estar fuera del
+círculo unitario.
+\end{defbox}
+
+\begin{defbox}[ARMA($p,q$)]
+\[
+  \Phi(B) Y_t = \Theta(B) \varepsilon_t, \quad
+  \Phi(B) = 1 - \varphi_1 B - \cdots - \varphi_p B^p, \quad
+  \Theta(B) = 1 + \theta_1 B + \cdots + \theta_q B^q.
+\]
+\end{defbox}
+
+\noindent\textbf{Intuición de las raíces.} Si una raíz del polinomio $\Phi(z)$
+está \emph{sobre} el círculo unitario (es decir, $|z|=1$), el proceso tiene
+una raíz unitaria y no es estacionario.
+
+\subsection{Raíz unitaria e integración}
+
+\begin{defbox}[Proceso I(1)]
+$Y_t$ es \textbf{integrado de orden 1}, denotado $I(1)$, si $Y_t$ no es
+estacionario pero $\Delta Y_t = Y_t - Y_{t-1}$ sí lo es.
+El ejemplo canónico es la \emph{caminata aleatoria}: $Y_t = Y_{t-1} + \varepsilon_t$.
+En esa caminata, $\mathrm{Var}(Y_t) = t\sigma^2 \to \infty$, por lo que no es
+estacionaria. Sin embargo, $\Delta Y_t = \varepsilon_t \sim WN(0,\sigma^2)$ sí
+lo es.
+\end{defbox}
+
+\noindent En finanzas, los \emph{log-precios} de commodities suelen ser $I(1)$.
+Los \emph{log-retornos} $r_t = \Delta \ln P_t$ son $I(0)$.
+
+% ============================================================
+\section{ARIMA($p,d,q$)}
+% ============================================================
+
+\subsection{Definición y fórmula general}
+
+\begin{defbox}[ARIMA($p,d,q$)]
+Un proceso es \textbf{ARIMA($p,d,q$)} (Autorregresivo Integrado de Promedio
+Móvil) si la $d$-ésima diferencia de $Y_t$ sigue un ARMA($p,q$):
+\[
+  \boxed{\Phi(B)\,(1-B)^d\,Y_t = \Theta(B)\,\varepsilon_t}
+\]
+\begin{center}
+\begin{tabular}{ll}
+\toprule
+Símbolo & Significado \\
+\midrule
+$p$ & Orden autorregresivo: cuántos rezagos de $Y$ entran al modelo \\
+$d$ & Grado de diferenciación ordinaria ($d=0,1$ o raramente $2$) \\
+$q$ & Orden de promedio móvil: cuántos rezagos del error entran \\
+$\Phi(B)$ & Polinomio AR: $1 - \varphi_1 B - \cdots - \varphi_p B^p$ \\
+$\Theta(B)$ & Polinomio MA: $1 + \theta_1 B + \cdots + \theta_q B^q$ \\
+$\varepsilon_t$ & Ruido blanco con varianza $\sigma^2$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+\end{defbox}
+
+\noindent\textbf{¿Por qué diferenciar?}  Si $Y_t$ es $I(1)$, los estimadores
+mínimo cuadráticos ordinarios no tienen las propiedades usuales. Diferenciamos
+para obtener una serie $W_t = \Delta^d Y_t$ que sea estacionaria y a la que
+se le pueda aplicar la teoría ARMA.
+
+\subsection{Proceso de diferenciación}
+
+Para un ARIMA(1,1,1) sobre log-precios del petróleo $y_t = \ln P_t$:
+\begin{align*}
+  W_t &= \Delta y_t = y_t - y_{t-1} = r_t \quad \text{(log-retorno)}\\
+  (1 - \varphi_1 B)\,W_t &= (1+\theta_1 B)\,\varepsilon_t
+\end{align*}
+Se obtiene un ARMA(1,1) para los log-retornos. Si $\varphi_1 = 0.15$ y
+$\theta_1 = -0.08$:
+\[
+  W_t = 0.15\,W_{t-1} + \varepsilon_t - 0.08\,\varepsilon_{t-1}.
+\]
+
+\subsection{Pronóstico con ARIMA}
+
+El pronóstico óptimo (mínimo error cuadrático medio lineal) en el horizonte $h$
+es:
+\[
+  \hat{Y}_{T+h|T} = \mathrm{E}[Y_{T+h} \mid Y_T, Y_{T-1}, \ldots]
+\]
+Para un ARIMA(p,1,q): se predice $\Delta \hat{Y}_{T+h}$ y se acumula desde $Y_T$.
+El intervalo de predicción al $95\%$ es:
+\[
+  \hat{Y}_{T+h|T} \pm 1.96\,\sigma\,\sqrt{\sum_{j=0}^{h-1}\psi_j^2}
+\]
+donde $\{\psi_j\}$ son los coeficientes de la representación MA$(\infty)$. La
+anchura del intervalo crece con $h$: a largo plazo, la incertidumbre se
+expande porque los errores se acumulan.
+
+% ============================================================
+\section{SARIMA($p,d,q$)($P,D,Q$)$_s$}
+% ============================================================
+
+\subsection{Motivación}
+
+El ARIMA no captura estructura que se repite cada $s$ periodos (por ejemplo,
+el pico de precio del gas en enero de cada año). El SARIMA extiende el ARIMA
+con polinomios AR y MA adicionales que operan en múltiplos del periodo $s$.
+
+\subsection{Definición y fórmula general}
+
+\begin{defbox}[SARIMA($p,d,q$)($P,D,Q$)$_s$]
+\[
+  \boxed{\Phi_P(B^s)\,\varphi_p(B)\,(1-B^s)^D\,(1-B)^d\,Y_t
+  = \Theta_Q(B^s)\,\theta_q(B)\,\varepsilon_t}
+\]
+\begin{center}
+\begin{tabular}{ll}
+\toprule
+Símbolo & Significado \\
+\midrule
+$p,d,q$ & Órdenes ordinarios (igual que en ARIMA) \\
+$P$ & Orden AR estacional \\
+$D$ & Grado de diferenciación estacional \\
+$Q$ & Orden MA estacional \\
+$s$ & Periodo estacional (e.g., $s=12$ para mensual, $s=4$ para trimestral) \\
+$\Phi_P(B^s)$ & Polinomio AR estacional: $1-\Phi_1 B^s - \cdots - \Phi_P B^{Ps}$ \\
+$\Theta_Q(B^s)$ & Polinomio MA estacional: $1+\Theta_1 B^s + \cdots + \Theta_Q B^{Qs}$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+\end{defbox}
+
+\subsection{Ejemplo: SARIMA(1,1,1)(1,1,1)$_{12}$}
+
+Expandiendo todos los operadores:
+\begin{align*}
+  &(1-\Phi_1 B^{12})(1-\varphi_1 B)(1-B^{12})(1-B)\,Y_t
+  = (1+\Theta_1 B^{12})(1+\theta_1 B)\,\varepsilon_t
+\end{align*}
+La diferencia doble $(1-B)(1-B^{12})Y_t = Y_t - Y_{t-1} - Y_{t-12} + Y_{t-13}$
+elimina tanto la tendencia ordinaria como la estacional.
+
+\subsection{Modelo de Airline (Box-Jenkins)}
+
+El modelo SARIMA(0,1,1)(0,1,1)$_{12}$ es:
+\[
+  (1-B)(1-B^{12})\,Y_t = (1+\theta_1 B)(1+\Theta_1 B^{12})\,\varepsilon_t.
+\]
+Es uno de los modelos más parsimoniosos y exitosos para series mensuales con
+tendencia y estacionalidad (ventas, pasajeros aéreos, exportaciones).
+
+% ============================================================
+\section{Interpretación de todos los parámetros}
+% ============================================================
+
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{p{1.8cm}p{4.5cm}p{5cm}}
+\toprule
+\textbf{Parámetro} & \textbf{¿Qué controla?} & \textbf{Interpretación práctica} \\
+\midrule
+$\varphi_i$ (AR) & Peso de rezago $i$ en la dinámica & Si $\varphi_1 > 0$, precios altos predicen precios altos el mes siguiente \\
+$\theta_i$ (MA) & Peso del error pasado $i$ & Corrige la predicción según errores recientes \\
+$d$ & Diferenciación ordinaria & $d=1$: modelamos retornos; $d=2$: modelamos cambios en retornos \\
+$\Phi_i$ (SAR) & Efecto del mismo mes del año anterior & Si $\Phi_1 > 0$, un invierno caro predice el siguiente invierno caro \\
+$\Theta_i$ (SMA) & Corrección MA en frecuencia estacional & Ajusta errores del mismo periodo en años anteriores \\
+$D$ & Diferenciación estacional & $D=1$: elimina tendencia estacional \\
+$s$ & Periodo de la estacionalidad & $s=12$ mensual, $s=4$ trimestral, $s=52$ semanal \\
+$\sigma^2$ & Varianza del error irreducible & Límite inferior de la incertidumbre del pronóstico \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+% ============================================================
+\section{ARIMA vs.\ SARIMA: diferencias estructurales y prácticas}
+% ============================================================
+
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{p{3.5cm}p{5cm}p{5cm}}
+\toprule
+\textbf{Dimensión} & \textbf{ARIMA} & \textbf{SARIMA} \\
+\midrule
+Estructura & Polinomios $\Phi(B)$ y $\Theta(B)$ ordinarios & Añade $\Phi_P(B^s)$ y $\Theta_Q(B^s)$ estacionales \\
+\midrule
+Diferenciación & Solo ordinaria: $(1-B)^d$ & Ordinaria \emph{y} estacional: $(1-B)^d(1-B^s)^D$ \\
+\midrule
+ACF/PACF & Picos en rezagos $1,\ldots,p$ o $q$ & Picos adicionales en $s, 2s, 3s, \ldots$ \\
+\midrule
+Parámetros & $p+q+1$ típicamente & $p+q+P+Q+1$ (más complejo) \\
+\midrule
+Aplicación típica & Petróleo, oro, log-retornos & Gas natural, ventas, temperatura, energía \\
+\midrule
+Pronóstico & No incorpora ciclos estacionales & Pronóstico captura la estación del año \\
+\midrule
+Cuándo preferirlo & Serie sin patrón estacional & Serie con patrón que se repite cada $s$ periodos \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\medskip
+\noindent\textbf{Diferencia de pronóstico.} Si el gas natural siempre sube en
+enero, un ARIMA predicirá el mismo nivel para todos los eneros futuros,
+mientras que un SARIMA ajustará al alza en enero respecto a los meses previos.
+La diferencia práctica es significativa en decisiones de cobertura energética.
+
+% ============================================================
+\section{Guía para elegir $p,d,q,P,D,Q$}
+% ============================================================
+
+\subsection{Principio general}
+
+Los órdenes del modelo se eligen en \textbf{cuatro etapas iterativas}:
+(1) identificación visual, (2) selección de candidatos con ACF/PACF,
+(3) estimación y comparación con AIC/BIC, (4) diagnóstico de residuos y
+validación fuera de muestra. No existe un algoritmo mecánico que siempre
+funcione; el modelado requiere criterio.
+
+\subsection{Cuándo diferenciar}
+
+\begin{itemize}
+  \item \textbf{Diferenciación ordinaria ($d$):} Aplica si la serie tiene
+        tendencia estocástica (raíz unitaria). Se confirma con:
+        \begin{itemize}[nosep]
+          \item Gráfica: la serie ``camina'' sin regresar a ningún nivel.
+          \item ACF muestral: decae muy lentamente hacia cero.
+          \item Prueba ADF: no rechaza $H_0$ (raíz unitaria).
+          \item Prueba KPSS: rechaza $H_0$ (estacionariedad).
+        \end{itemize}
+        En la práctica, $d=1$ suele ser suficiente para precios de commodities.
+        \textbf{Evitar $d=2$} a menos que haya evidencia clara.
+
+  \item \textbf{Diferenciación estacional ($D$):} Aplica si la ACF muestral
+        tiene picos persistentes en los rezagos $s, 2s, 3s, \ldots$
+        (no decaen rápidamente). $D=1$ es la elección más común.
+        Combinar $D=1$ con $d=1$ cubre la mayoría de los casos de series
+        mensuales con tendencia y estacionalidad.
+\end{itemize}
+
+\begin{warnbox}[Sobre-diferenciación]
+Diferenciar más de lo necesario introduce correlación negativa artificial en la
+ACF (pico negativo en rezago 1 de la diferenciada). Si la ACF de $\Delta^d Y_t$
+muestra un pico negativo grande en el rezago 1, probablemente $d$ es demasiado
+alto.
+\end{warnbox}
+
+\subsection{Cómo ACF y PACF sugieren $p$ y $q$}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{lll}
+\toprule
+\textbf{Patrón en serie diferenciada} & \textbf{ACF} & \textbf{PACF} \\
+\midrule
+AR($p$) puro & Decae (exponencial u oscilante) & Corte abrupto en rezago $p$ \\
+MA($q$) puro & Corte abrupto en rezago $q$ & Decae \\
+ARMA($p,q$) & Ambas decaen & Ambas decaen \\
+Ruido blanco & $\approx 0$ para todo $k \geq 1$ & $\approx 0$ para todo $k \geq 1$ \\
+\midrule
+AR estacional ($P$, lag $s$) & Decae en $s,2s,\ldots$ & Corte en lag $Ps$ \\
+MA estacional ($Q$, lag $s$) & Corte en lag $Qs$ & Decae en $s,2s,\ldots$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\noindent\textbf{Procedimiento:}
+\begin{enumerate}
+  \item Graficar la serie diferenciada $W_t = \Delta^d \Delta_s^D Y_t$.
+  \item Trazar ACF y PACF de $W_t$ con bandas de significancia $\pm 1.96/\sqrt{T}$.
+  \item Leer los cortes ordinarios (rezagos 1 a 5) para $p$ y $q$.
+  \item Leer los cortes en múltiplos de $s$ para $P$ y $Q$.
+  \item Proponer 2-3 modelos candidatos.
+  \item Estimar y comparar AIC/BIC.
+  \item Elegir el modelo más parsimonioso con buenos diagnósticos de residuos.
+\end{enumerate}
+
+\subsection{Cómo combinar ACF/PACF con AIC/BIC}
+
+Los gráficos dan candidatos; AIC y BIC los priorizan:
+\begin{itemize}[nosep]
+  \item Si ACF/PACF no son concluyentes (ambas decaen), probar modelos con
+        $p \in \{0,1,2\}$ y $q \in \{0,1,2\}$ y elegir el de menor AIC.
+  \item Si AIC y BIC difieren, preferir BIC (más parsimonioso) salvo que el
+        modelo con menor AIC tenga claramente mejores residuos.
+  \item Nunca elegir un modelo sólo por AIC/BIC si los residuos muestran
+        autocorrelación.
+\end{itemize}
+
+% ============================================================
+\section{Errores comunes al elegir órdenes}
+% ============================================================
+
+\begin{warnbox}[Errores comunes al elegir órdenes]
+\begin{enumerate}
+  \item \textbf{ACF/PACF solos no son suficientes.} Con series finitas, los
+        gráficos son ruidosos. Un pico apenas fuera de la banda puede ser
+        ruido. Siempre confirmar con AIC/BIC y diagnóstico de residuos.
+
+  \item \textbf{AIC/BIC más bajo no siempre es el mejor.}
+        Diferencias de AIC menores a 2 son irrelevantes; preferir el modelo
+        más parsimonioso entre los empatados. Un modelo con AIC muy bajo pero
+        residuos autocorrelacionados es deficiente.
+
+  \item \textbf{La sobre-diferenciación es perjudicial.}
+        Aplicar $d=2$ cuando $d=1$ es suficiente destruye información y produce
+        residuos con correlación negativa artificial. Verificar siempre la
+        gráfica de la serie diferenciada antes de diferenciar de nuevo.
+
+  \item \textbf{Los diagnósticos de residuos siempre importan.}
+        Si la prueba de Ljung-Box rechaza independencia en los residuos, el
+        modelo elegido es incorrecto sin importar cuánto diga AIC/BIC. Los
+        residuos deben parecerse a ruido blanco.
+
+  \item \textbf{Los modelos parsimoniosos suelen ser preferibles.}
+        Un ARIMA(1,1,1) que captura la dinámica principal frecuentemente
+        pronostica mejor fuera de muestra que un ARIMA(3,1,2) que se sobre-ajusta.
+        En mercados de commodities, los modelos complejos son más frágiles ante
+        cambios de régimen.
+\end{enumerate}
+\end{warnbox}
+
+% ============================================================
+\section{ACF y PACF}
+% ============================================================
+
+\subsection{Definiciones formales}
+
+\begin{defbox}[ACF --- Función de autocorrelación]
+\[
+  \rho(k) = \frac{\gamma(k)}{\gamma(0)}, \quad
+  \gamma(k) = \mathrm{Cov}(Y_t, Y_{t-k}).
+\]
+Estima en muestra: $\hat{\rho}(k) = \hat{\gamma}(k)/\hat{\gamma}(0)$,
+donde $\hat{\gamma}(k) = \frac{1}{T}\sum_{t=k+1}^{T}(Y_t - \bar{Y})(Y_{t-k}-\bar{Y})$.
+\end{defbox}
+
+\begin{defbox}[PACF --- Función de autocorrelación parcial]
+$\alpha(k)$ es la correlación entre $Y_t$ e $Y_{t-k}$, \emph{eliminando}
+el efecto lineal de $Y_{t-1}, \ldots, Y_{t-k+1}$. Es decir:
+\[
+  \alpha(k) = \mathrm{Corr}(Y_t - \hat{Y}_t,\; Y_{t-k} - \hat{Y}_{t-k}),
+\]
+donde $\hat{Y}_t$ es la proyección de $Y_t$ sobre $Y_{t-1},\ldots,Y_{t-k+1}$.
+\end{defbox}
+
+\subsection{Bandas de significancia}
+
+Bajo la hipótesis nula de ruido blanco, $\hat{\rho}(k) \approx N(0, 1/T)$.
+La banda al $95\%$ es $\pm 1.96/\sqrt{T}$. Picos que superan la banda en el
+correlograma indican autocorrelación estadísticamente significativa.
+
+\subsection{Patrones clave}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{p{2.8cm}p{4.5cm}p{4.5cm}}
+\toprule
+\textbf{Proceso} & \textbf{ACF} & \textbf{PACF} \\
+\midrule
+AR($p$) & Decae exponencial u oscilante & Corte en rezago $p$ \\
+MA($q$) & Corte en rezago $q$ & Decae \\
+ARMA($p,q$) & Decae & Decae \\
+Ruido blanco & $\approx 0$ & $\approx 0$ \\
+I(1) sin diferenciar & Decae muy lento & Primer valor $\approx 1$ \\
+Estacional (SAR$P$) & Picos en $s, 2s, \ldots, Ps$ decayendo & Corte en rezago $Ps$ \\
+Estacional (SMA$Q$) & Corte en rezago $Qs$ & Picos en $s,2s,\ldots$ decayendo \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+% ============================================================
+\section{AIC y BIC}
+% ============================================================
+
+\begin{defbox}[Criterios de información]
+Sea $\hat{L}$ la verosimilitud maximizada, $k$ el número de parámetros
+estimados y $n$ el tamaño de la muestra:
+\[
+  \text{AIC} = -2\ln\hat{L} + 2k, \qquad
+  \text{BIC} = -2\ln\hat{L} + k\ln n.
+\]
+\end{defbox}
+
+\noindent\textbf{Interpretación.}
+\begin{itemize}[nosep]
+  \item Ambos penalizan la complejidad del modelo para evitar el sobre-ajuste.
+  \item BIC penaliza más fuerte cuando $n > 7$ ($\ln n > 2$). Para muestras
+        grandes (como 228 meses de commodities), BIC favorece modelos más
+        parsimoniosos.
+  \item Se comparan modelos \emph{dentro del mismo proceso de diferenciación}:
+        no comparar AIC de un ARIMA(1,0,0) con uno de un ARIMA(1,1,0) porque
+        las series dependientes son distintas.
+  \item Un menor AIC/BIC indica mejor balance entre ajuste y complejidad, pero
+        la diferencia debe ser al menos 2-3 unidades para ser prácticamente
+        relevante.
+\end{itemize}
+
+% ============================================================
+\section{Pruebas ADF y KPSS}
+% ============================================================
+
+\subsection{Prueba de Dickey-Fuller Aumentada (ADF)}
+
+\begin{defbox}[ADF]
+Estima el modelo:
+\[
+  \Delta Y_t = \mu + \delta Y_{t-1} + \sum_{j=1}^{k}\psi_j \Delta Y_{t-j} + \varepsilon_t.
+\]
+$H_0$: $\delta = 0$ (existe raíz unitaria, la serie es $I(1)$).\\
+$H_1$: $\delta < 0$ (la serie es estacionaria, $I(0)$).\\
+Si $p$-valor $< 0.05$: rechazar $H_0$ $\Rightarrow$ serie estacionaria.
+\end{defbox}
+
+\subsection{Prueba KPSS}
+
+\begin{defbox}[KPSS]
+$H_0$: la serie es estacionaria.\\
+$H_1$: la serie tiene raíz unitaria.\\
+Si $p$-valor $< 0.05$: rechazar $H_0$ $\Rightarrow$ serie no estacionaria.
+\end{defbox}
+
+\subsection{Cómo usarlas juntas}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{ccp{6.5cm}}
+\toprule
+\textbf{ADF} & \textbf{KPSS} & \textbf{Conclusión} \\
+\midrule
+No rechaza $H_0$ & Rechaza $H_0$ & Fuerte evidencia de raíz unitaria. Diferenciar. \\
+Rechaza $H_0$ & No rechaza $H_0$ & Fuerte evidencia de estacionariedad. No diferenciar. \\
+No rechaza $H_0$ & No rechaza $H_0$ & Señales mixtas. Revisar gráfica, aumentar muestra. \\
+Rechaza $H_0$ & Rechaza $H_0$ & Señales mixtas. Posible proceso de memoria larga o quiebre estructural. \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\noindent\textbf{Implicaciones para la diferenciación.} El orden de diferenciación
+$d$ se determina aplicando ADF y KPSS iterativamente: primero en niveles, luego
+en primeras diferencias, hasta que ambas pruebas sean consistentes con
+estacionariedad.
+
+% ============================================================
+\section{Transformaciones}
+% ============================================================
+
+En series de precios de commodities, la elección de la transformación afecta
+el tipo de modelo y la interpretación.
+
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{p{2.5cm}p{3.5cm}p{5cm}}
+\toprule
+\textbf{Transformación} & \textbf{Notación} & \textbf{Cuándo usar} \\
+\midrule
+Niveles & $P_t$ & Modelado directo; útil si la varianza es estable \\
+Log-precios & $y_t = \ln P_t$ & Estabiliza la varianza, suaviza tendencia exponencial; recomendado para precios de commodities \\
+Retornos simples & $\frac{P_t - P_{t-1}}{P_{t-1}}$ & Comparaciones entre activos; sensible a outliers \\
+Log-retornos & $r_t = \ln P_t - \ln P_{t-1}$ & Aproximación a retornos simples, aditivos en el tiempo; estándar en finanzas \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\noindent\textbf{Regla práctica para commodities:}
+\begin{itemize}[nosep]
+  \item Modelar $\ln P_t$ con ARIMA(p,1,q) es equivalente a modelar $r_t$ con ARMA(p,q).
+  \item Si la volatilidad cambia mucho (como el petróleo en 2020), el modelo ARIMA
+        de los log-retornos seguirá siendo inadecuado sin un componente GARCH.
+  \item Para el gas natural con estacionalidad, modelar $\ln P_t$ con SARIMA(p,1,q)(P,1,Q)$_{12}$
+        es una buena práctica inicial.
+\end{itemize}
+
+% ============================================================
+\section{Parsimonia}
+% ============================================================
+
+\begin{defbox}[Principio de parsimonia]
+Entre dos modelos que describen igualmente bien los datos, preferir el que tiene
+\emph{menos parámetros}. En la tradición de Box-Jenkins, un ARIMA(1,1,1) con
+residuos aceptables es preferible a un ARIMA(3,1,2) con marginalmente mejor AIC.
+\end{defbox}
+
+\noindent\textbf{¿Por qué importa la parsimonia?}
+\begin{itemize}[nosep]
+  \item \textbf{Interpretabilidad:} Un modelo simple tiene coeficientes con
+        significado económico claro.
+  \item \textbf{Pronóstico:} Modelos complejos tienden a sobre-ajustarse a la
+        muestra y a pronosticar peor fuera de ella, especialmente en presencia
+        de quiebres estructurales (frecuentes en commodities).
+  \item \textbf{Estimación:} Con muestras finitas, estimar muchos parámetros
+        introduce incertidumbre innecesaria.
+\end{itemize}
+
+\noindent\textbf{Parsimonia en la práctica:} Si AIC elige ARIMA(2,1,1) pero
+ARIMA(1,1,1) tiene residuos igualmente buenos y AIC similar ($\Delta \text{AIC} < 2$),
+preferir el ARIMA(1,1,1).
+
+% ============================================================
+\section{Box-Jenkins y diagnóstico de residuos}
+% ============================================================
+
+\subsection{El procedimiento de Box-Jenkins}
+
+El método de Box-Jenkins (1976) es el flujo de trabajo estándar para ajustar
+modelos ARIMA/SARIMA. Consta de tres etapas iterativas:
+
+\begin{enumerate}
+  \item \textbf{Identificación:}
+    \begin{itemize}[nosep]
+      \item Graficar $Y_t$, $\ln Y_t$, y la serie diferenciada.
+      \item Aplicar ADF y KPSS para determinar $d$ y $D$.
+      \item Examinar ACF y PACF de la serie diferenciada para proponer $p, q, P, Q$.
+    \end{itemize}
+
+  \item \textbf{Estimación:}
+    \begin{itemize}[nosep]
+      \item Estimar los parámetros por máxima verosimilitud (MV) condicional.
+      \item Obtener AIC/BIC para cada modelo candidato.
+    \end{itemize}
+
+  \item \textbf{Diagnóstico:}
+    \begin{itemize}[nosep]
+      \item Verificar que los residuos $\hat{\varepsilon}_t$ sean ruido blanco.
+      \item Si no lo son, regresar a la etapa 1 y revisar los órdenes.
+    \end{itemize}
+\end{enumerate}
+
+\subsection{Diagnóstico de residuos}
+
+Un modelo bien ajustado debe producir residuos que parezcan ruido blanco.
+Los diagnósticos estándar son:
+
+\begin{enumerate}
+  \item \textbf{Gráfica de residuos vs.\ tiempo:} Debe mostrar fluctuaciones
+        sin tendencia ni agrupamiento. Si se observan clústeres de alta
+        varianza, hay heterocedasticidad (considerar GARCH).
+
+  \item \textbf{Histograma y Q-Q plot:} Verifican normalidad. En commodities,
+        los residuos suelen ser leptocúrticos (colas pesadas).
+
+  \item \textbf{ACF de los residuos:} Todos los picos deben estar dentro de
+        las bandas $\pm 1.96/\sqrt{T}$. Un pico significativo indica que el
+        modelo no capturó toda la dinámica.
+
+  \item \textbf{Prueba de Ljung-Box:}
+    \[
+      Q = n(n+2)\sum_{k=1}^{h}\frac{\hat{\rho}_k^2}{n-k}
+      \sim \chi^2(h-p-q) \quad \text{bajo }H_0.
+    \]
+    $H_0$: los residuos son ruido blanco.
+    Si $p$-valor $< 0.05$: rechazar $H_0$, el modelo es inadecuado.
+    Se usa $h = \min(10, n/5)$ rezagos.
+\end{enumerate}
+
+% ============================================================
+\section{Validación fuera de muestra}
+% ============================================================
+
+\begin{defbox}[División entrenamiento / validación]
+Dividir la serie en:
+\begin{itemize}[nosep]
+  \item \textbf{Conjunto de entrenamiento:} observaciones 1 a $T_0$. Se
+        estima el modelo aquí.
+  \item \textbf{Conjunto de validación:} observaciones $T_0+1$ a $T$.
+        Se evalúa la capacidad predictiva.
+\end{itemize}
+\end{defbox}
+
+\noindent\textbf{¿Por qué el ajuste dentro de muestra es insuficiente?}
+Un modelo puede memorizar el ruido de la muestra de entrenamiento y pronosticar
+mal. El AIC/BIC corrige parcialmente esto, pero la evaluación fuera de muestra
+es la prueba definitiva.
+
+\subsection{Métricas de error predictivo}
+
+Sea $\hat{Y}_{t|t-1}$ el pronóstico a un paso para la observación $t$, y
+$Y_t$ el valor real, para $t = T_0+1, \ldots, T$:
+\[
+  \text{RMSE} = \sqrt{\frac{1}{T-T_0}\sum_{t=T_0+1}^{T}(Y_t - \hat{Y}_{t|t-1})^2},
+  \quad
+  \text{MAE} = \frac{1}{T-T_0}\sum_{t=T_0+1}^{T}|Y_t - \hat{Y}_{t|t-1}|.
+\]
+El MAPE (error porcentual absoluto medio) puede ser inestable cuando $Y_t
+\approx 0$. Para commodities, RMSE y MAE son más robustos.
+
+\noindent\textbf{Uso para comparar modelos:} Si el modelo A tiene mejor AIC
+pero mayor RMSE fuera de muestra que el modelo B, preferir B. La validación
+fuera de muestra tiene la última palabra en el contexto predictivo.
+
+% ============================================================
+\section{STL + ARIMA/SARIMA}
+\label{sec:stl}
+% ============================================================
+
+\subsection{¿Qué es STL?}
+
+STL (\textit{Seasonal and Trend decomposition using Loess}) descompone:
+\[
+  Y_t = \hat{T}_t + \hat{S}_t + \hat{R}_t
+\]
+usando regresión local (Loess) en ventanas móviles. Sus ventajas sobre la
+descomposición clásica son: (1) robusto ante valores atípicos, (2) permite que
+la estacionalidad evolucione lentamente, (3) flexible en el ancho de ventana.
+
+\subsection{Fuerza estacional}
+
+Un indicador útil para decidir si se necesita un modelo estacional es:
+\[
+  FS = \max\!\left\{0,\; 1 - \frac{\text{Var}(\hat{R}_t)}{\text{Var}(\hat{S}_t + \hat{R}_t)}\right\}.
+\]
+$FS \approx 0$: estacionalidad débil (ARIMA puede ser suficiente).
+$FS \approx 1$: estacionalidad dominante (usar SARIMA o STL+ARIMA).
+
+\subsection{STL + ARIMA vs.\ SARIMA directo}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{p{5cm}p{5cm}}
+\toprule
+\textbf{STL + ARIMA} & \textbf{SARIMA directo} \\
+\midrule
+Útil cuando la estacionalidad cambia en el tiempo & Asume estacionalidad fija \\
+Más robusto ante valores atípicos & Puede distorsionarse por outliers \\
+Permite modelar la serie desestacionalizada con ARIMA simple & Modelo en una sola ecuación \\
+Pronóstico requiere sumar las componentes & Pronóstico directo \\
+Preferible con series largas ($T > 5s$) & Adecuado con muestras moderadas \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\noindent\textbf{Para el gas natural:} La estacionalidad invernal es fuerte y
+relativamente estable; un SARIMA directo suele funcionar bien. Si se detectan
+cambios en el patrón estacional (por ejemplo, por la expansión del gas de esquisto
+a partir de 2012), STL + ARIMA puede ser superior.
+
+% ============================================================
+\section{Tabla de decisión: patrones empíricos y acciones de modelado}
+% ============================================================
+
+\begin{center}
+\renewcommand{\arraystretch}{1.4}
+\begin{longtable}{p{4.5cm}p{5cm}p{3.5cm}}
+\toprule
+\textbf{Patrón observado} & \textbf{Interpretación} & \textbf{Acción} \\
+\midrule
+ACF decae muy lentamente (todos los picos grandes) & Serie no estacionaria (posible raíz unitaria) & Aplicar $\Delta$ (d=1); confirmar con ADF/KPSS \\
+\midrule
+ACF tiene picos en $s,2s,3s$ persistentes & Estacionalidad no estacionaria & Aplicar $\Delta_s$ (D=1) \\
+\midrule
+PACF corta en rezago $p$, ACF decae & Modelo AR($p$) & Usar $q=0$, $p$ según PACF \\
+\midrule
+ACF corta en rezago $q$, PACF decae & Modelo MA($q$) & Usar $p=0$, $q$ según ACF \\
+\midrule
+Ambas decaen sin corte abrupto & ARMA($p,q$) & Probar $p,q \in \{1,2\}$, comparar AIC/BIC \\
+\midrule
+Residuos con ACF significativa en rezago $k$ & Orden $p$ o $q$ mal especificado & Incrementar $p$ o $q$ \\
+\midrule
+Residuos con ACF significativa en rezago $s$ & Componente estacional no capturada & Añadir $P$ o $Q$ \\
+\midrule
+Ljung-Box rechaza $H_0$ & Residuos no son ruido blanco & Revisar modelo; incrementar orden \\
+\midrule
+AIC baja, BIC baja, RMSE alto (fuera de muestra) & Sobreajuste dentro de muestra & Reducir $p+q$; usar modelo más parsimonioso \\
+\midrule
+ACF de $\Delta Y_t$ con pico negativo grande en rezago 1 & Posible sobrediferenciación & Probar $d=0$ con tendencia determinista \\
+\midrule
+Residuos agrupados en varianza (ARCH effect) & Heterocedasticidad condicional & Extender a ARIMA-GARCH \\
+\bottomrule
+\end{longtable}
+\end{center}
+
+% ============================================================
+\section{Limitaciones}
+% ============================================================
+
+\begin{warnbox}[Limitaciones de ARIMA y SARIMA]
+\begin{enumerate}
+  \item \textbf{No capturan volatilidad condicional.} Los modelos ARIMA asumen
+        $\sigma^2$ constante. En commodities, la varianza suele ser alta en
+        periodos de crisis (COVID-19, guerra, etc.).
+        \textit{Extensión:} ARIMA-GARCH o ARIMA-EGARCH.
+
+  \item \textbf{No capturan heterocedasticidad.} La varianza de los errores puede
+        cambiar en el tiempo. El residuo del ARIMA exhibirá clústeres de
+        volatilidad visibles en la gráfica.
+
+  \item \textbf{No capturan quiebres estructurales.} Un cambio en el régimen de
+        precios (por ejemplo, el hundimiento del petróleo en 2014-2016) invalida
+        los parámetros estimados antes del quiebre.
+        \textit{Extensión:} modelos de cambio de régimen (Markov-switching).
+
+  \item \textbf{No capturan asimetría.} Las caídas de precio suelen ser más
+        bruscas que las subidas (asimetría negativa observada en el petróleo).
+        El ARIMA no distingue choques positivos de negativos.
+        \textit{Extensión:} EGARCH, GJR-GARCH.
+
+  \item \textbf{Limitaciones de ACF/PACF en muestras finitas.} Las bandas
+        $\pm 1.96/\sqrt{T}$ son aproximadas y pueden dar falsos positivos.
+
+  \item \textbf{AIC y BIC penalizan complejidad, no garantizan buen pronóstico.}
+        En presencia de quiebres, un modelo seleccionado por AIC puede pronosticar
+        muy mal.
+
+  \item \textbf{Box-Jenkins asume estacionariedad tras diferenciar.} Si la serie
+        tiene raíces unitarias múltiples, quiebres de nivel, o memoria larga
+        (Hurst), la diferenciación estándar puede no ser suficiente.
+
+  \item \textbf{El pronóstico converge a la media a largo plazo.} Para horizontes
+        muy largos, el intervalo de predicción del ARIMA(p,d,q) se expande
+        indefinidamente (si $d \geq 1$), siendo de poca utilidad práctica más
+        allá de unos pocos periodos.
+\end{enumerate}
+\end{warnbox}
+
+% ============================================================
+\section{Tres ejemplos con código Python}
+% ============================================================
+
+Los siguientes tres ejemplos utilizan el archivo \texttt{commodities\_monthly.csv}
+que acompaña a este documento. Cada ejemplo incluye gráficas, interpretaciones
+y justificación de los órdenes elegidos.
+
+% ============================================================
+\subsection{Ejemplo 1: ARIMA para el precio del petróleo crudo (WTI)}
+% ============================================================
+
+\noindent\textbf{Justificación de la serie.} El petróleo crudo WTI no tiene
+estacionalidad mensual clara dominante (su patrón es más cíclico que estacional),
+pero es $I(1)$ en log-precios. Es el ejemplo ideal para un ARIMA ordinario.
+Se trabaja con los log-precios del petróleo.
+
+\begin{lstlisting}[style=python, caption={Ejemplo 1: ARIMA para log-precios del petróleo WTI}]
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import matplotlib.gridspec as gridspec
+from statsmodels.tsa.statespace.sarimax import SARIMAX
+from statsmodels.tsa.stattools import adfuller, kpss, acf, pacf
+from statsmodels.graphics.tsaplots import plot_acf, plot_pacf
+from statsmodels.tsa.seasonal import seasonal_decompose
+from statsmodels.stats.diagnostic import acorr_ljungbox
+from sklearn.metrics import mean_squared_error, mean_absolute_error
+
+# ===== 1. Cargar datos =====
+df = pd.read_csv('commodities_monthly.csv', parse_dates=['date'], index_col='date')
+df.index.freq = 'MS'  # frecuencia mensual
+oil = np.log(df['crude_oil_wti'])  # log-precios
+
+# ===== 2. Grafica de la serie =====
+fig, axes = plt.subplots(2, 1, figsize=(12, 7))
+df['crude_oil_wti'].plot(ax=axes[0], title='Precio Petroleo WTI (USD/barril)', color='steelblue')
+axes[0].set_ylabel('USD/barril')
+oil.plot(ax=axes[1], title='Log-precio Petroleo WTI', color='darkorange')
+axes[1].set_ylabel('ln(USD/barril)')
+plt.tight_layout()
+plt.savefig('ej1_serie.png', dpi=150, bbox_inches='tight')
+plt.show()
+# Interpretacion: La serie en niveles muestra tendencia y alta volatilidad.
+# Los log-precios suavizan la varianza y presentan una tendencia estocastica clara.
+
+# ===== 3. Pruebas ADF y KPSS =====
+adf_result = adfuller(oil, autolag='AIC')
+kpss_result = kpss(oil, regression='c', nlags='auto')
+print(f"ADF  - estadistico: {adf_result[0]:.4f}, p-valor: {adf_result[1]:.4f}")
+print(f"KPSS - estadistico: {kpss_result[0]:.4f}, p-valor: {kpss_result[1]:.4f}")
+# ADF: no rechaza H0 (p > 0.05) => raiz unitaria probable
+# KPSS: rechaza H0 (p < 0.05) => no estacionaria
+# => Diferenciar: d=1
+
+oil_diff = oil.diff().dropna()
+adf_d1 = adfuller(oil_diff, autolag='AIC')
+print(f"\nADF en diferencias: estadistico={adf_d1[0]:.4f}, p-valor={adf_d1[1]:.4f}")
+# Tras diferenciar, ADF debe rechazar H0 => estacionaria => d=1 correcto
+
+# ===== 4. ACF y PACF de la serie diferenciada =====
+fig, axes = plt.subplots(1, 2, figsize=(12, 4))
+plot_acf(oil_diff, lags=24, ax=axes[0], title='ACF del log-retorno del petroleo')
+plot_pacf(oil_diff, lags=24, ax=axes[1], title='PACF del log-retorno del petroleo',
+          method='ywm')
+plt.tight_layout()
+plt.savefig('ej1_acf_pacf.png', dpi=150, bbox_inches='tight')
+plt.show()
+# Interpretacion: Si ACF y PACF son casi cero para todos los rezagos,
+# los log-retornos son aproximadamente ruido blanco => ARIMA(0,1,0) o ARIMA(1,1,0).
+# Si hay un pico en el rezago 1 de la ACF: considerar MA(1), i.e., ARIMA(0,1,1).
+# Si hay un pico en la PACF: considerar AR(1), i.e., ARIMA(1,1,0).
+
+# ===== 5. Descomposicion de la serie original =====
+decomp = seasonal_decompose(oil, model='additive', period=12, extrapolate_trend='freq')
+fig, axes = plt.subplots(4, 1, figsize=(12, 10))
+decomp.observed.plot(ax=axes[0], title='Observada'); axes[0].set_ylabel('log P')
+decomp.trend.plot(ax=axes[1], title='Tendencia'); axes[1].set_ylabel('log P')
+decomp.seasonal.plot(ax=axes[2], title='Estacional'); axes[2].set_ylabel('')
+decomp.resid.plot(ax=axes[3], title='Residuo'); axes[3].set_ylabel('')
+plt.tight_layout()
+plt.savefig('ej1_decomp.png', dpi=150, bbox_inches='tight')
+plt.show()
+# La tendencia es clara. El componente estacional del petroleo es debil
+# (justifica usar ARIMA sin parte estacional).
+
+# ===== 6. Seleccion de ordenes con AIC =====
+train_size = int(len(oil) * 0.85)  # ~85% entrenamiento
+train, test = oil.iloc[:train_size], oil.iloc[train_size:]
+
+resultados = {}
+for p in range(0, 3):
+    for q in range(0, 3):
+        try:
+            mod = SARIMAX(train, order=(p, 1, q), trend='n',
+                          enforce_stationarity=True, enforce_invertibility=True)
+            res = mod.fit(disp=False)
+            resultados[(p, 1, q)] = (res.aic, res.bic)
+        except Exception:
+            pass
+
+print("\nComparacion AIC/BIC:")
+print(f"{'Orden':15s} {'AIC':10s} {'BIC':10s}")
+for k, v in sorted(resultados.items(), key=lambda x: x[1][0]):
+    print(f"ARIMA{str(k):10s} {v[0]:10.2f} {v[1]:10.2f}")
+
+# ===== 7. Ajuste del modelo elegido =====
+# Supongamos que ACF/PACF y AIC sugieren ARIMA(1,1,1)
+model = SARIMAX(train, order=(1, 1, 1), trend='n',
+                enforce_stationarity=True, enforce_invertibility=True)
+results = model.fit(disp=False)
+print("\n", results.summary())
+
+# ===== 8. Diagnostico de residuos =====
+fig = results.plot_diagnostics(figsize=(12, 8))
+plt.suptitle('Diagnostico de residuos - ARIMA(1,1,1) Petroleo', y=1.01)
+plt.tight_layout()
+plt.savefig('ej1_diagnosticos.png', dpi=150, bbox_inches='tight')
+plt.show()
+
+lb = acorr_ljungbox(results.resid, lags=[10], return_df=True)
+print(f"\nLjung-Box (lag=10): estadistico={lb['lb_stat'].values[0]:.4f}, "
+      f"p-valor={lb['lb_pvalue'].values[0]:.4f}")
+# Si p-valor > 0.05: no rechazar H0 => residuos son ruido blanco => modelo OK
+
+# ===== 9. Pronostico y evaluacion fuera de muestra =====
+forecast_obj = results.get_forecast(steps=len(test))
+fc_mean = forecast_obj.predicted_mean
+fc_ci = forecast_obj.conf_int(alpha=0.05)
+
+# Metricas en log-precios
+rmse = np.sqrt(mean_squared_error(test, fc_mean))
+mae = mean_absolute_error(test, fc_mean)
+print(f"\nValidacion fuera de muestra (log-precios):")
+print(f"RMSE = {rmse:.4f},  MAE = {mae:.4f}")
+
+# Grafica del pronostico
+fig, ax = plt.subplots(figsize=(12, 5))
+train[-36:].plot(ax=ax, label='Entrenamiento (ultimos 3 anos)', color='steelblue')
+test.plot(ax=ax, label='Real (validacion)', color='black')
+fc_mean.plot(ax=ax, label='Pronostico ARIMA(1,1,1)', color='crimson', linestyle='--')
+ax.fill_between(fc_ci.index, fc_ci.iloc[:, 0], fc_ci.iloc[:, 1],
+                alpha=0.2, color='crimson', label='IC 95%')
+ax.set_title('Pronostico log-precio Petroleo WTI - ARIMA(1,1,1)')
+ax.legend()
+plt.tight_layout()
+plt.savefig('ej1_forecast.png', dpi=150, bbox_inches='tight')
+plt.show()
+
+# ===== 10. Interpretacion del pronostico =====
+# El pronostico en log-precios se convierte a niveles con exp():
+fc_levels = np.exp(fc_mean)
+real_levels = np.exp(test)
+print(f"\nRMSE en niveles (USD/barril): "
+      f"{np.sqrt(mean_squared_error(real_levels, fc_levels)):.2f}")
+# Limitaciones: ARIMA no captura clusters de volatilidad del petroleo (2020, etc.)
+# Considera extender a ARIMA-GARCH para modelar la varianza condicional.
+\end{lstlisting}
+
+\noindent\textbf{Interpretación del ejemplo.}
+\begin{itemize}[nosep]
+  \item La serie de log-precios del petróleo es $I(1)$: ADF no rechaza $H_0$
+        en niveles, pero sí en primeras diferencias.
+  \item Los log-retornos ($d=1$) tienen ACF y PACF con pocos picos significativos,
+        consistentes con ARIMA(1,1,1) o incluso ARIMA(0,1,0).
+  \item La descomposición muestra tendencia clara y componente estacional débil,
+        justificando el uso de ARIMA (no SARIMA).
+  \item El intervalo de predicción se expande con el horizonte, reflejando la
+        incertidumbre creciente característica de los mercados de energía.
+  \item \textbf{Limitación clave:} el modelo no captura la volatilidad extrema
+        de 2020. Los residuos de ese periodo serán grandes. Para pronósticos de
+        riesgo, considerar ARIMA-GARCH.
+\end{itemize}
+
+% ============================================================
+\subsection{Ejemplo 2: SARIMA para el gas natural (Henry Hub)}
+% ============================================================
+
+\noindent\textbf{Justificación de la serie.} El gas natural tiene una
+estacionalidad invernal bien documentada: los precios suben en invierno por
+mayor demanda de calefacción y bajan en verano. Es el ejemplo por excelencia
+de un proceso con estacionalidad regular, ideal para SARIMA.
+
+\begin{lstlisting}[style=python, caption={Ejemplo 2: SARIMA para log-precios del gas natural}]
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+from statsmodels.tsa.statespace.sarimax import SARIMAX
+from statsmodels.tsa.stattools import adfuller, kpss
+from statsmodels.graphics.tsaplots import plot_acf, plot_pacf
+from statsmodels.tsa.seasonal import STL
+from statsmodels.stats.diagnostic import acorr_ljungbox
+from sklearn.metrics import mean_squared_error, mean_absolute_error
+
+# ===== 1. Cargar y preparar datos =====
+df = pd.read_csv('commodities_monthly.csv', parse_dates=['date'], index_col='date')
+df.index.freq = 'MS'
+gas = np.log(df['natural_gas_henryhub'])
+
+# ===== 2. Grafica de la serie =====
+fig, ax = plt.subplots(figsize=(12, 4))
+np.exp(gas).plot(ax=ax, color='forestgreen', linewidth=1)
+ax.set_title('Gas Natural Henry Hub (USD/MMBtu)')
+ax.set_ylabel('USD/MMBtu')
+ax.axhline(np.exp(gas).mean(), color='red', linestyle='--', alpha=0.5, label='Media')
+ax.legend()
+plt.tight_layout()
+plt.savefig('ej2_serie.png', dpi=150, bbox_inches='tight')
+plt.show()
+# Se observa: tendencia estocastica + picos invernales recurrentes cada 12 meses.
+
+# ===== 3. Descomposicion STL =====
+stl = STL(gas, period=12, robust=True)
+stl_result = stl.fit()
+fig = stl_result.plot()
+fig.set_size_inches(12, 9)
+fig.suptitle('Descomposicion STL - Log Gas Natural', y=1.01)
+plt.tight_layout()
+plt.savefig('ej2_stl.png', dpi=150, bbox_inches='tight')
+plt.show()
+# Interpretacion: La tendencia es la componente dominante a largo plazo.
+# El componente estacional muestra pico claro en enero-febrero (invierno norte).
+# El residuo contiene eventos como el spike de 2022 (guerra en Ucrania).
+
+# ===== 4. Fuerza estacional =====
+seasonal_strength = max(0, 1 - np.var(stl_result.resid) /
+                         np.var(stl_result.seasonal + stl_result.resid))
+print(f"Fuerza estacional (FS) = {seasonal_strength:.4f}")
+# FS > 0.6 => estacionalidad fuerte => usar SARIMA
+
+# ===== 5. Pruebas de estacionariedad =====
+adf_gas = adfuller(gas, autolag='AIC')
+print(f"ADF niveles: estadistico={adf_gas[0]:.4f}, p-valor={adf_gas[1]:.4f}")
+# Probable raiz unitaria => d=1
+
+gas_diff = gas.diff().dropna()
+gas_diff_s = gas_diff.diff(12).dropna()  # doble diferencia
+
+adf_dd = adfuller(gas_diff_s, autolag='AIC')
+print(f"ADF doble-diferencia: estadistico={adf_dd[0]:.4f}, p-valor={adf_dd[1]:.4f}")
+# Estacionaria tras d=1, D=1
+
+# ===== 6. ACF y PACF de la serie doblemente diferenciada =====
+fig, axes = plt.subplots(1, 2, figsize=(12, 4))
+plot_acf(gas_diff_s, lags=36, ax=axes[0],
+         title='ACF - Gas Natural (d=1, D=1)')
+plot_pacf(gas_diff_s, lags=36, ax=axes[1],
+          title='PACF - Gas Natural (d=1, D=1)', method='ywm')
+plt.tight_layout()
+plt.savefig('ej2_acf_pacf.png', dpi=150, bbox_inches='tight')
+plt.show()
+# Interpretacion:
+# - Rezagos ordinarios 1-5: guian p y q (partes no estacionales).
+# - Rezago 12: un pico significativo en ACF y decaimiento en PACF
+#   sugiere SMA(1) => Q=1. Si corte en PACF en lag 12: SAR(1) => P=1.
+# - Modelo candidato: SARIMA(1,1,1)(0,1,1)_12 (modelo de Airline modificado)
+
+# ===== 7. Division entrenamiento / validacion =====
+train_size = int(len(gas) * 0.85)
+train = gas.iloc[:train_size]
+test = gas.iloc[train_size:]
+
+# ===== 8. Ajuste del modelo SARIMA =====
+# Modelo candidato basado en ACF/PACF: SARIMA(1,1,1)(0,1,1)_12
+model = SARIMAX(train, order=(1, 1, 1), seasonal_order=(0, 1, 1, 12),
+                trend='n', enforce_stationarity=True, enforce_invertibility=True)
+results = model.fit(disp=False)
+print(results.summary())
+
+# ===== 9. Diagnostico de residuos =====
+fig = results.plot_diagnostics(figsize=(12, 8))
+plt.suptitle('Diagnostico de residuos - SARIMA(1,1,1)(0,1,1)_12 Gas Natural')
+plt.tight_layout()
+plt.savefig('ej2_diagnosticos.png', dpi=150, bbox_inches='tight')
+plt.show()
+
+lb = acorr_ljungbox(results.resid, lags=[12, 24], return_df=True)
+print("\nLjung-Box:")
+print(lb[['lb_stat', 'lb_pvalue']])
+
+# ===== 10. Pronostico =====
+fc_obj = results.get_forecast(steps=len(test))
+fc_mean = fc_obj.predicted_mean
+fc_ci = fc_obj.conf_int(alpha=0.05)
+
+fig, ax = plt.subplots(figsize=(12, 5))
+np.exp(train[-48:]).plot(ax=ax, label='Entrenamiento', color='forestgreen')
+np.exp(test).plot(ax=ax, label='Real', color='black')
+np.exp(fc_mean).plot(ax=ax, label='SARIMA Pronostico', color='darkorange',
+                      linestyle='--')
+ax.fill_between(fc_ci.index,
+                np.exp(fc_ci.iloc[:, 0]),
+                np.exp(fc_ci.iloc[:, 1]),
+                alpha=0.2, color='darkorange', label='IC 95%')
+ax.set_title('Pronostico Gas Natural - SARIMA(1,1,1)(0,1,1)_12')
+ax.set_ylabel('USD/MMBtu')
+ax.legend()
+plt.tight_layout()
+plt.savefig('ej2_forecast.png', dpi=150, bbox_inches='tight')
+plt.show()
+
+# ===== 11. Evaluacion =====
+rmse = np.sqrt(mean_squared_error(test, fc_mean))
+mae = mean_absolute_error(test, fc_mean)
+print(f"RMSE (log) = {rmse:.4f}")
+print(f"MAE  (log) = {mae:.4f}")
+
+# En niveles:
+rmse_niv = np.sqrt(mean_squared_error(np.exp(test), np.exp(fc_mean)))
+print(f"RMSE (USD/MMBtu) = {rmse_niv:.4f}")
+
+# ===== 12. Interpretacion del pronostico =====
+print(f"\nParametros estimados:")
+print(f"phi_1 (AR) = {results.params.get('ar.L1', 'NA'):.4f}")
+print(f"theta_1 (MA) = {results.params.get('ma.L1', 'NA'):.4f}")
+print(f"Theta_1 (SMA12) = {results.params.get('ma.S.L12', 'NA'):.4f}")
+# Theta_1 negativo (tipicamente -0.5 a -0.9) indica que un error
+# positivo en enero del año pasado reduce el pronostico del siguiente enero:
+# el modelo corrige la subestimacion/sobreestimacion estacional pasada.
+\end{lstlisting}
+
+\noindent\textbf{Interpretación del ejemplo.}
+\begin{itemize}[nosep]
+  \item La STL muestra claramente la estacionalidad invernal del gas natural:
+        picos en enero-febrero, mínimos en mayo-agosto.
+  \item Con $d=1$ y $D=1$ la serie es estacionaria. La doble diferenciación
+        elimina tanto la tendencia de largo plazo como el ciclo estacional anual.
+  \item El modelo SARIMA(1,1,1)(0,1,1)$_{12}$ captura la dinámica ordinaria y
+        la correción de errores estacionales anuales (término $\Theta_1$).
+  \item El pronóstico fuera de muestra reproduce los picos invernales, lo que
+        sería imposible con un ARIMA sin componente estacional.
+  \item \textbf{Limitación:} el spike de precios de 2022 por la guerra en
+        Ucrania es un quiebre estructural que ningún modelo ARIMA/SARIMA puede
+        anticipar. Los residuos de ese periodo serán muy grandes.
+\end{itemize}
+
+% ============================================================
+\subsection{Ejemplo 3: Comparación ARIMA vs.\ SARIMA para el oro}
+% ============================================================
+
+\noindent\textbf{Justificación.} El precio del oro no tiene estacionalidad
+mensual marcada, pero su comportamiento es de tendencia alcista de largo plazo.
+Este ejemplo ilustra el proceso completo de selección: ACF/PACF, comparación
+AIC/BIC, y validación fuera de muestra entre un ARIMA y un SARIMA para
+decidir cuál modelo usar.
+
+\begin{lstlisting}[style=python, caption={Ejemplo 3: Comparacion ARIMA vs.\ SARIMA - Oro}]
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+from statsmodels.tsa.statespace.sarimax import SARIMAX
+from statsmodels.tsa.stattools import adfuller, kpss
+from statsmodels.graphics.tsaplots import plot_acf, plot_pacf
+from statsmodels.tsa.seasonal import seasonal_decompose, STL
+from statsmodels.stats.diagnostic import acorr_ljungbox
+from sklearn.metrics import mean_squared_error, mean_absolute_error
+import itertools
+import warnings
+warnings.filterwarnings('ignore')
+
+# ===== 1. Cargar datos =====
+df = pd.read_csv('commodities_monthly.csv', parse_dates=['date'], index_col='date')
+df.index.freq = 'MS'
+gold = np.log(df['gold_usd_oz'])
+
+# ===== 2. Analisis exploratorio =====
+fig, axes = plt.subplots(2, 1, figsize=(12, 7))
+np.exp(gold).plot(ax=axes[0], color='goldenrod',
+                  title='Precio del Oro (USD/oz)')
+gold.plot(ax=axes[1], color='darkgoldenrod',
+          title='Log-precio del Oro')
+plt.tight_layout()
+plt.savefig('ej3_serie.png', dpi=150, bbox_inches='tight')
+plt.show()
+
+# ===== 3. Descomposicion =====
+decomp = seasonal_decompose(gold, model='additive', period=12,
+                             extrapolate_trend='freq')
+fig, axes = plt.subplots(4, 1, figsize=(12, 10))
+for ax, (comp, label) in zip(axes, [
+    (decomp.observed, 'Observada'),
+    (decomp.trend, 'Tendencia'),
+    (decomp.seasonal, 'Estacional'),
+    (decomp.resid, 'Residuo')]):
+    comp.plot(ax=ax, color='goldenrod')
+    ax.set_title(label)
+plt.tight_layout()
+plt.savefig('ej3_decomp.png', dpi=150, bbox_inches='tight')
+plt.show()
+# La componente estacional del oro es muy pequena relativa a tendencia y residuo.
+# Esto sugiere que ARIMA puede ser tan bueno como SARIMA.
+
+# ===== 4. Fuerza estacional del oro =====
+stl_gold = STL(gold, period=12, robust=True).fit()
+fs_gold = max(0, 1 - np.var(stl_gold.resid) /
+               np.var(stl_gold.seasonal + stl_gold.resid))
+print(f"Fuerza estacional del oro: FS = {fs_gold:.4f}")
+# Si FS < 0.4 => estacionalidad debil => ARIMA deberia ser suficiente.
+
+# ===== 5. Pruebas de estacionariedad =====
+adf_gold = adfuller(gold, autolag='AIC')
+kpss_gold = kpss(gold, regression='c', nlags='auto')
+print(f"ADF (niveles): estadistico={adf_gold[0]:.4f}, p-valor={adf_gold[1]:.4f}")
+print(f"KPSS(niveles): estadistico={kpss_gold[0]:.4f}, p-valor={kpss_gold[1]:.4f}")
+# Ambos confirman raiz unitaria => d=1
+
+gold_diff = gold.diff().dropna()
+adf_d1 = adfuller(gold_diff, autolag='AIC')
+print(f"ADF (d=1): estadistico={adf_d1[0]:.4f}, p-valor={adf_d1[1]:.4f}")
+
+# ===== 6. ACF y PACF =====
+fig, axes = plt.subplots(2, 2, figsize=(14, 8))
+plot_acf(gold, lags=36, ax=axes[0, 0], title='ACF - Oro (niveles)')
+plot_pacf(gold, lags=36, ax=axes[0, 1], title='PACF - Oro (niveles)', method='ywm')
+plot_acf(gold_diff, lags=36, ax=axes[1, 0], title='ACF - Oro (d=1)')
+plot_pacf(gold_diff, lags=36, ax=axes[1, 1], title='PACF - Oro (d=1)', method='ywm')
+plt.tight_layout()
+plt.savefig('ej3_acf_pacf.png', dpi=150, bbox_inches='tight')
+plt.show()
+# En niveles: ACF decae lentamente => no estacionaria.
+# En d=1: ACF y PACF con pocos picos => log-retornos casi ruido blanco.
+# No hay picos prominentes en rezagos 12, 24 => confirma estacionalidad debil.
+
+# ===== 7. Division de muestra =====
+train_size = int(len(gold) * 0.82)
+train, test = gold.iloc[:train_size], gold.iloc[train_size:]
+print(f"Entrenamiento: {len(train)} obs. | Validacion: {len(test)} obs.")
+
+# ===== 8. Busqueda de mejores ordenes ARIMA =====
+best_aic = np.inf
+best_params = None
+
+for p, q in itertools.product(range(3), range(3)):
+    try:
+        mod = SARIMAX(train, order=(p, 1, q), trend='n',
+                      enforce_stationarity=True, enforce_invertibility=True)
+        res = mod.fit(disp=False)
+        if res.aic < best_aic:
+            best_aic = res.aic
+            best_params = (p, 1, q)
+    except Exception:
+        pass
+
+print(f"\nMejor ARIMA por AIC: ARIMA{best_params}, AIC={best_aic:.2f}")
+
+# ===== 9. Ajuste ARIMA optimo =====
+arima_mod = SARIMAX(train, order=best_params, trend='n',
+                    enforce_stationarity=True, enforce_invertibility=True)
+arima_res = arima_mod.fit(disp=False)
+
+# ===== 10. Ajuste SARIMA con componente estacional debil =====
+# Probar SARIMA(1,1,1)(0,1,1)_12 para comparar
+sarima_mod = SARIMAX(train, order=(1, 1, 1), seasonal_order=(0, 1, 1, 12),
+                     trend='n', enforce_stationarity=True,
+                     enforce_invertibility=True)
+sarima_res = sarima_mod.fit(disp=False)
+
+# ===== 11. Comparacion dentro de muestra =====
+print("\nComparacion de modelos:")
+print(f"{'Modelo':30s} {'AIC':8s} {'BIC':8s}")
+print(f"{'ARIMA' + str(best_params):30s} {arima_res.aic:8.2f} {arima_res.bic:8.2f}")
+print(f"{'SARIMA(1,1,1)(0,1,1)_12':30s} {sarima_res.aic:8.2f} {sarima_res.bic:8.2f}")
+# Si el ARIMA tiene AIC/BIC comparable o mejor que el SARIMA,
+# la componente estacional es innecesaria => principio de parsimonia.
+
+# ===== 12. Diagnostico de residuos para ambos modelos =====
+for label, res in [('ARIMA', arima_res), ('SARIMA', sarima_res)]:
+    lb = acorr_ljungbox(res.resid, lags=[10, 20], return_df=True)
+    print(f"\n{label} - Ljung-Box:")
+    print(lb[['lb_stat', 'lb_pvalue']].to_string())
+
+# ===== 13. Pronostico fuera de muestra: ambos modelos =====
+h = len(test)
+fc_arima = arima_res.get_forecast(steps=h)
+fc_sarima = sarima_res.get_forecast(steps=h)
+
+# Metricas
+def calc_metrics(actual, predicted):
+    rmse = np.sqrt(mean_squared_error(actual, predicted))
+    mae = mean_absolute_error(actual, predicted)
+    return rmse, mae
+
+rmse_a, mae_a = calc_metrics(test, fc_arima.predicted_mean)
+rmse_s, mae_s = calc_metrics(test, fc_sarima.predicted_mean)
+
+print("\nValidacion fuera de muestra (log-precios):")
+print(f"{'Modelo':30s} {'RMSE':8s} {'MAE':8s}")
+print(f"{'ARIMA' + str(best_params):30s} {rmse_a:8.4f} {mae_a:8.4f}")
+print(f"{'SARIMA(1,1,1)(0,1,1)_12':30s} {rmse_s:8.4f} {mae_s:8.4f}")
+
+# ===== 14. Grafica comparativa de pronosticos =====
+fig, axes = plt.subplots(2, 1, figsize=(12, 9), sharex=True)
+
+for ax, (label, fc_obj, color) in zip(axes, [
+    ('ARIMA', fc_arima, 'steelblue'),
+    ('SARIMA(1,1,1)(0,1,1)_12', fc_sarima, 'darkorange')]):
+    fc_mean = fc_obj.predicted_mean
+    fc_ci = fc_obj.conf_int(alpha=0.05)
+    np.exp(train[-36:]).plot(ax=ax, color='darkgray', label='Entrenamiento')
+    np.exp(test).plot(ax=ax, color='black', label='Real')
+    np.exp(fc_mean).plot(ax=ax, color=color, linestyle='--',
+                          label=f'Pronostico {label}')
+    ax.fill_between(fc_ci.index,
+                    np.exp(fc_ci.iloc[:, 0]),
+                    np.exp(fc_ci.iloc[:, 1]),
+                    alpha=0.2, color=color)
+    ax.set_title(f'Pronostico Oro - {label}')
+    ax.set_ylabel('USD/oz')
+    ax.legend()
+
+plt.tight_layout()
+plt.savefig('ej3_forecast_comparativo.png', dpi=150, bbox_inches='tight')
+plt.show()
+
+# ===== 15. Conclusion del ejemplo =====
+# Si el ARIMA tiene AIC/BIC similar o mejor que el SARIMA Y menor RMSE
+# fuera de muestra => el componente estacional del oro no mejora el pronostico.
+# Si el SARIMA gana en RMSE: la estacionalidad debil del oro si aporta.
+# Conclusion practica: para el oro, ARIMA es generalmente suficiente;
+# el exceso de parametros del SARIMA introduce varianza sin beneficio.
+print("\nConclusion: El modelo con menor RMSE fuera de muestra y mejor")
+print("AIC/BIC es el preferido. La parsimonia sugiere ARIMA si la")
+print("diferencia con SARIMA es marginal.")
+\end{lstlisting}
+
+\noindent\textbf{Interpretación del ejemplo.}
+\begin{itemize}[nosep]
+  \item La fuerza estacional del oro es baja ($FS < 0.3$ típicamente). La
+        descomposición confirma que la tendencia domina y que la estacionalidad
+        mensual es casi despreciable.
+  \item Los log-retornos del oro tienen ACF y PACF con muy pocos picos, lo que
+        indica que el proceso se acerca a un paseo aleatorio.
+  \item Comparando ARIMA vs.\ SARIMA en RMSE fuera de muestra: si el ARIMA
+        es igual de bueno o mejor, el principio de parsimonia lo justifica.
+  \item Este ejemplo ilustra que el SARIMA no siempre mejora el pronóstico;
+        añadir componentes estacionales a una serie sin estacionalidad real
+        empeora los resultados.
+\end{itemize}
+
+% ============================================================
+\section{Glosario de notación y conceptos}
+% ============================================================
+
+\begin{longtable}{p{2.5cm}p{9cm}}
+\toprule
+\textbf{Símbolo/Término} & \textbf{Definición} \\
+\midrule
+\endhead
+$\{Y_t\}$ & Proceso estocástico en tiempo discreto \\
+$\mu$ & Media del proceso (constante bajo estacionariedad débil) \\
+$\gamma(k)$ & Autocovarianza en el rezago $k$: $\mathrm{Cov}(Y_t, Y_{t-k})$ \\
+$\rho(k)$ & Autocorrelación en el rezago $k$: $\gamma(k)/\gamma(0)$ \\
+$\alpha(k)$ & Autocorrelación parcial en el rezago $k$ (PACF) \\
+$B$ & Operador de rezago: $BY_t = Y_{t-1}$ \\
+$\Delta$ & Diferencia ordinaria: $(1-B)Y_t = Y_t - Y_{t-1}$ \\
+$\Delta_s$ & Diferencia estacional: $(1-B^s)Y_t = Y_t - Y_{t-s}$ \\
+$\varepsilon_t$ & Ruido blanco: media cero, varianza $\sigma^2$, incorrelacionado \\
+$\varphi_i$ & Coeficiente AR ordinario (rezago $i$) \\
+$\theta_i$ & Coeficiente MA ordinario (rezago $i$) \\
+$\Phi_i$ & Coeficiente AR estacional (rezago $is$) \\
+$\Theta_i$ & Coeficiente MA estacional (rezago $is$) \\
+$p$ & Orden autorregresivo ordinario \\
+$d$ & Orden de diferenciación ordinaria \\
+$q$ & Orden de promedio móvil ordinario \\
+$P$ & Orden autorregresivo estacional \\
+$D$ & Orden de diferenciación estacional \\
+$Q$ & Orden de promedio móvil estacional \\
+$s$ & Periodo estacional (e.g., 12 para series mensuales) \\
+$I(d)$ & Serie integrada de orden $d$ \\
+$I(0)$ & Serie estacionaria (integrada de orden cero) \\
+$I(1)$ & Serie con una raíz unitaria (primera diferencia es estacionaria) \\
+AIC & Criterio de información de Akaike: $-2\ln\hat{L} + 2k$ \\
+BIC & Criterio de información bayesiano (Schwarz): $-2\ln\hat{L} + k\ln n$ \\
+ADF & Prueba de Dickey-Fuller aumentada: $H_0$: raíz unitaria \\
+KPSS & Prueba de Kwiatkowski-Phillips-Schmidt-Shin: $H_0$: estacionaria \\
+Ljung-Box & Prueba de independencia de residuos: $H_0$: ruido blanco \\
+RMSE & Raíz del error cuadrático medio: $\sqrt{\frac{1}{n}\sum(Y_t-\hat{Y}_t)^2}$ \\
+MAE & Error absoluto medio: $\frac{1}{n}\sum|Y_t - \hat{Y}_t|$ \\
+STL & Seasonal and Trend decomposition using Loess \\
+Box-Jenkins & Procedimiento iterativo de identificación, estimación, diagnóstico \\
+Parsimonia & Preferencia por el modelo con menos parámetros entre los igualmente buenos \\
+$FS$ & Fuerza estacional: $\max\{0, 1 - \text{Var}(\hat{R})/\text{Var}(\hat{S}+\hat{R})\}$ \\
+\bottomrule
+\end{longtable}
+
+% ============================================================
+\section{Lista de verificación de modelado}
+% ============================================================
+
+\begin{defbox}[Checklist: del dato crudo al pronóstico]
+\begin{enumerate}
+  \item[$\square$] \textbf{Carga y limpieza.}
+    Verificar frecuencia, valores faltantes, y formato de la serie.
+    Identificar la variable de interés (precios, log-precios, retornos).
+
+  \item[$\square$] \textbf{Visualización inicial.}
+    Graficar $Y_t$ y $\ln Y_t$. ¿Se observa tendencia? ¿Estacionalidad visual?
+    ¿Cambios abruptos de nivel o varianza?
+
+  \item[$\square$] \textbf{Descomposición.}
+    Aplicar descomposición clásica o STL. Calcular fuerza estacional $FS$.
+    Si $FS > 0.5$: considerar SARIMA o STL+ARIMA.
+
+  \item[$\square$] \textbf{Transformación.}
+    ¿Usar niveles, log-precios, o retornos? Justificar con la gráfica de
+    varianza condicional. Aplicar logaritmo si la varianza crece con el nivel.
+
+  \item[$\square$] \textbf{Pruebas de estacionariedad.}
+    Aplicar ADF y KPSS. Determinar $d$ (y $D$ si hay estacionalidad).
+    Nunca sobre-diferenciar.
+
+  \item[$\square$] \textbf{ACF y PACF.}
+    Graficar sobre la serie diferenciada. Identificar cortes ordinarios (para
+    $p$ y $q$) y cortes en múltiplos de $s$ (para $P$ y $Q$).
+    Proponer 2-4 modelos candidatos.
+
+  \item[$\square$] \textbf{División de muestra.}
+    Reservar el último 15-20\% de las observaciones para validación fuera de
+    muestra. \textbf{No usar la muestra de validación para ajustar el modelo.}
+
+  \item[$\square$] \textbf{Estimación y comparación.}
+    Estimar cada modelo candidato. Comparar AIC y BIC. Ante empate, preferir
+    el modelo más parsimonioso.
+
+  \item[$\square$] \textbf{Diagnóstico de residuos.}
+    Verificar: gráfica de residuos sin tendencia/varianza cambiante,
+    histograma y Q-Q plot aproximadamente normales, ACF de residuos dentro
+    de bandas, Ljung-Box con $p$-valor $> 0.05$.
+    Si falla: revisar órdenes y regresar a la etapa de ACF/PACF.
+
+  \item[$\square$] \textbf{Validación fuera de muestra.}
+    Calcular RMSE y MAE en la muestra de validación.
+    El modelo con mejor RMSE fuera de muestra es el definitivo.
+
+  \item[$\square$] \textbf{Pronóstico.}
+    Generar pronóstico puntual e intervalos de predicción al 80\% y 95\%.
+    Graficar el ``fan chart'' (abanico de pronósticos).
+
+  \item[$\square$] \textbf{Interpretación y limitaciones.}
+    Explicar los parámetros estimados en términos económicos.
+    Mencionar explícitamente qué no captura el modelo (volatilidad condicional,
+    quiebres, asimetría). Proponer extensiones si son relevantes.
+\end{enumerate}
+\end{defbox}
+
+% ============================================================
+\section{Síntesis final}
+% ============================================================
+
+Este documento ha cubierto el flujo completo del análisis de series de tiempo
+con modelos ARIMA y SARIMA, desde los fundamentos matemáticos hasta la
+aplicación en datos de commodities. Los puntos clave a retener son:
+
+\medskip
+\noindent\textbf{1. Estacionariedad es el punto de partida.}  Todo análisis
+comienza verificando si la serie es $I(0)$ o $I(1)$ (o $I(2)$). Las pruebas
+ADF y KPSS se complementan: usarlas juntas reduce el riesgo de conclusiones
+erróneas.
+
+\medskip
+\noindent\textbf{2. La diferenciación es medicina, no vitamina.}  Diferenciar
+de más es tan perjudicial como no diferenciar. La serie diferenciada correctamente
+debe mostrar ACF y PACF ``legibles'' (sin decaimiento lento masivo).
+
+\medskip
+\noindent\textbf{3. ACF/PACF dan candidatos; AIC/BIC los filtran;
+los residuos deciden.}  Ninguna herramienta sola es suficiente. El proceso de
+Box-Jenkins es iterativo y requiere criterio, no mecánica.
+
+\medskip
+\noindent\textbf{4. La parsimonia protege el pronóstico.}  Los modelos
+sobreparametrizados memorizan el ruido de la muestra y fallan fuera de ella.
+Para commodities sujetos a quiebres estructurales frecuentes, la parsimonia
+es especialmente valiosa.
+
+\medskip
+\noindent\textbf{5. SARIMA no siempre es mejor que ARIMA.}  Añadir componentes
+estacionales a una serie sin estacionalidad real empeora el pronóstico. La
+fuerza estacional $FS$ y la validación fuera de muestra guían la decisión.
+
+\medskip
+\noindent\textbf{6. Los modelos ARIMA/SARIMA tienen límites claros.}  No
+capturan volatilidad condicional (GARCH), quiebres estructurales
+(Markov-switching), ni asimetría en choques. Para mercados de energía y metales
+sometidos a episodios extremos, considerar extensiones es buena práctica, no
+un lujo.
+
+\medskip
+\noindent\textbf{7. El pronóstico es incierto.}  Los intervalos de predicción
+se expanden con el horizonte. Usar el punto central como pronóstico puntual
+es razonable; usar el intervalo completo es esencial para decisiones de cobertura
+y gestión de riesgos.
+
+\vspace{1cm}
+\noindent\rule{\linewidth}{0.5pt}
+\begin{center}
+{\small
+\textbf{Universidad Panamericana} $\cdot$ Ciudad UP $\cdot$ Facultad de Ciencias Empresariales\\
+Series de Tiempo para Finanzas $\cdot$ Verano 2026
+}
+\end{center}
+
+\end{document}
+\end antml:parameter>
