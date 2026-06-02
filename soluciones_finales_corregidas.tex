@@ -1,0 +1,1322 @@
+\documentclass[11pt,a4paper]{article}
+
+% ── Paquetes ─────────────────────────────────────────────────────────────────
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[spanish]{babel}
+\usepackage{lmodern}
+\usepackage{microtype}
+\usepackage{geometry}
+\geometry{left=2.5cm, right=2.5cm, top=2.5cm, bottom=2.5cm}
+
+\usepackage{amsmath, amssymb, amsthm}
+\usepackage{mathtools}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{xcolor}
+\usepackage{tcolorbox}
+\usepackage{enumitem}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{fancyhdr}
+\usepackage{titlesec}
+
+% ── Colores ───────────────────────────────────────────────────────────────────
+\definecolor{azulUP}{RGB}{52, 86, 139}
+\definecolor{moradoUP}{RGB}{102, 51, 153}
+\definecolor{verdeSol}{RGB}{0, 128, 64}
+\definecolor{grisClaro}{RGB}{245, 245, 250}
+\definecolor{naranja}{RGB}{204, 102, 0}
+
+% ── Cajas ─────────────────────────────────────────────────────────────────────
+\tcbuselibrary{skins, breakable}
+
+\newtcolorbox{cajaHallazgo}{
+  enhanced, breakable,
+  colback=moradoUP!10, colframe=moradoUP!80,
+  title={\textbf{Hallazgo clave}},
+  fonttitle=\bfseries\color{white},
+  attach boxed title to top left={yshift=-2mm, xshift=4mm},
+  boxed title style={colback=moradoUP!80, colframe=moradoUP},
+  left=4pt, right=4pt, top=8pt, bottom=4pt
+}
+
+\newtcolorbox{cajaInciso}[1]{
+  enhanced, breakable,
+  colback=azulUP!8, colframe=azulUP!70,
+  title={\textbf{Inciso #1}},
+  fonttitle=\bfseries\color{white},
+  attach boxed title to top left={yshift=-2mm, xshift=4mm},
+  boxed title style={colback=azulUP!70, colframe=azulUP},
+  left=4pt, right=4pt, top=8pt, bottom=4pt
+}
+
+\newtcolorbox{cajaPista}{
+  enhanced, breakable,
+  colback=verdeSol!8, colframe=verdeSol!70,
+  title={\textbf{Pista pedagógica}},
+  fonttitle=\bfseries\color{white},
+  attach boxed title to top left={yshift=-2mm, xshift=4mm},
+  boxed title style={colback=verdeSol!70, colframe=verdeSol},
+  left=4pt, right=4pt, top=8pt, bottom=4pt
+}
+
+\newtcolorbox{cajaCFA}[1]{
+  enhanced, breakable,
+  colback=naranja!8, colframe=naranja!70,
+  title={\textbf{Pregunta CFA #1}},
+  fonttitle=\bfseries\color{white},
+  attach boxed title to top left={yshift=-2mm, xshift=4mm},
+  boxed title style={colback=naranja!70, colframe=naranja},
+  left=4pt, right=4pt, top=8pt, bottom=4pt
+}
+
+% ── Encabezados ───────────────────────────────────────────────────────────────
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small\color{azulUP}\textit{Análisis de Series de Tiempo}}
+\fancyhead[R]{\small\color{azulUP}\textsc{Soluciones -- Partes A y B}}
+\fancyfoot[C]{\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+
+% ── Secciones ─────────────────────────────────────────────────────────────────
+\titleformat{\section}[block]
+  {\large\bfseries\color{azulUP}}
+  {\thesection}{1em}{}
+  [\color{azulUP}\titlerule]
+
+\titleformat{\subsection}[block]
+  {\normalsize\bfseries\color{moradoUP}}
+  {\thesubsection}{1em}{}
+
+% ── Comandos matemáticos ──────────────────────────────────────────────────────
+\newcommand{\E}{\mathbb{E}}
+\newcommand{\Var}{\operatorname{Var}}
+\newcommand{\Cov}{\operatorname{Cov}}
+\newcommand{\sigmat}{\sigma^2_t}
+\newcommand{\sigmabar}{\bar{\sigma}^2}
+\newcommand{\eps}{\varepsilon}
+
+% ══════════════════════════════════════════════════════════════════════════════
+\begin{document}
+\thispagestyle{empty}
+
+% ── Portada ──────────────────────────────────────────────────────────────────
+\begin{center}
+  \vspace*{1.5cm}
+  {\LARGE\bfseries\color{azulUP} Universidad Panamericana}\\[6pt]
+  {\large\color{moradoUP} Finanzas Cuantitativas $\cdot$ Séptimo Semestre}\\[10pt]
+  \noindent\color{azulUP}\rule{\linewidth}{1.5pt}\\[8pt]
+  {\Huge\bfseries\color{azulUP} Soluciones Detalladas}\\[6pt]
+  {\large\color{moradoUP} Ejercicios Propuestos -- Partes A y B}\\[8pt]
+  {\large Análisis de Series de Tiempo}\\[4pt]
+  {\normalsize SARIMA $\cdot$ SARIMAX $\cdot$ GARCH $\cdot$ GJR-GARCH $\cdot$ EGARCH $\cdot$ VaR $\cdot$ CFA}\\[6pt]
+  \noindent\color{azulUP}\rule{\linewidth}{1.5pt}\\[14pt]
+  {\normalsize\itshape Elaboradas con nivel pedagógico para estudiantes de $7^\circ$ semestre}\\[12pt]
+  \begin{tabular}{rl}
+    \textbf{Elaboraron:} & Guillermo García Ramos de la Rosa \\
+                         & Iñaki Castillo y Osante \\
+    \textbf{Materia:}    & Análisis de Series de Tiempo \\
+    \textbf{Institución:} & Universidad Panamericana -- Ciudad UP \\
+    \textbf{Fecha:}      & 30 de noviembre de 2020 \\
+  \end{tabular}
+\end{center}
+
+\vspace{14pt}
+{\small
+\textbf{Nota introductoria.} Cada ejercicio se resuelve en cuatro dimensiones:
+(1)~la \emph{ecuación matemática} precisa,
+(2)~el \emph{porqué} de cada paso,
+(3)~el \emph{cómo} se ejecuta operativamente, y
+(4)~la \emph{intuición financiera} que conecta el resultado con la realidad.
+Lee primero el enunciado del ejercicio, luego el inciso completo antes de pasar al siguiente.
+}
+
+\newpage
+\tableofcontents
+\newpage
+
+% ══════════════════════════════════════════════════════════════════════════════
+\section{Parte A -- Ejercicios analíticos: SARIMAX y familia GARCH}
+% ══════════════════════════════════════════════════════════════════════════════
+
+% ─────────────────────────────────────────────────────────────────────────────
+\subsection*{Ejercicio 1 \texorpdfstring{$\cdot$}{·} Identificación SARIMAX con variable exógena macroeconómica}
+\addcontentsline{toc}{subsection}{Ejercicio 1: Identificación SARIMAX}
+% ─────────────────────────────────────────────────────────────────────────────
+
+\textbf{Contexto.} $y_t$ es el logaritmo del precio mensual de un bono soberano de mercados emergentes (enero 2010 -- diciembre 2022, $n=156$) y $x_t$ el rendimiento del Tesoro de EE.UU.\ a 10 años como variable exógena.
+
+% ── Inciso a ─────────────────────────────────────────────────────────────────
+\begin{cajaInciso}{a}
+Escriba la ecuación completa del modelo SARIMAX$(1,1,1)(1,1,0)_{12}$ con variable exógena $x_t$. Identifique cada operador polinomial en $B$.
+\end{cajaInciso}
+
+\textbf{Solución.}
+
+El modelo SARIMAX es una extensión del SARIMA que agrega variables externas en la ecuación de la media condicional. Con $s=12$ (datos mensuales), la notación $(p,d,q)(P,D,Q)_{12}=(1,1,1)(1,1,0)_{12}$ se traduce en:
+
+\[
+\underbrace{(1 - \Phi_1 B^{12})}_{\text{SAR}(1)}
+\underbrace{(1 - \phi_1 B)}_{\text{AR}(1)}
+\underbrace{(1 - B)}_{\Delta}
+\underbrace{(1 - B^{12})}_{\Delta_{12}}
+y_t
+=
+\beta\, x_t
++
+\underbrace{(1 + \theta_1 B)}_{\text{MA}(1)}
+\eps_t
+\]
+
+Cada componente tiene un rol definido:
+\begin{itemize}[leftmargin=*]
+  \item $B$: operador de rezago. $B^k y_t = y_{t-k}$.
+  \item $(1-B)$: diferencia regular $\Delta y_t = y_t - y_{t-1}$. Elimina tendencias lineales.
+  \item $(1-B^{12})$: diferencia estacional $\Delta_{12}y_t = y_t - y_{t-12}$. Elimina la estacionalidad anual.
+  \item $(1-\phi_1 B)$: polinomio AR regular de orden 1. Captura autocorrelación de corto plazo.
+  \item $(1-\Phi_1 B^{12})$: polinomio AR estacional de orden 1. Captura dependencia entre el mismo mes de años consecutivos.
+  \item $(1+\theta_1 B)$: polinomio MA regular de orden 1. Modela el efecto de choques pasados.
+  \item $\beta x_t$: variable exógena (rendimiento del Tesoro a 10 años). Su coeficiente mide cuánto cambia $y_t$ cuando $x_t$ cambia en una unidad, \emph{manteniendo todo lo demás constante}.
+\end{itemize}
+
+\begin{cajaHallazgo}
+El SARIMAX combina la dinámica propia de la serie (operadores AR, MA y diferencias) con el efecto de variables externas. Antes de atribuir todo el movimiento de $y_t$ a su propio pasado, dejamos que $x_t$ explique lo que pueda. El resto se modela con SARIMA.
+\end{cajaHallazgo}
+
+% ── Inciso b ─────────────────────────────────────────────────────────────────
+\begin{cajaInciso}{b}
+El ADF sobre $y_t$ arroja estadístico $= -1.42$ con valor crítico al 5\% de $-2.89$. ¿Qué implica para $d$? ¿Es congruente con $d=1$?
+\end{cajaInciso}
+
+\textbf{Solución.}
+
+La prueba ADF contrasta:
+\[
+H_0: y_t \text{ tiene raíz unitaria (no estacionaria)} \quad \text{vs} \quad H_1: y_t \text{ es estacionaria}
+\]
+Se rechaza $H_0$ si el estadístico ADF es \emph{más negativo} que el valor crítico.
+
+\[
+\text{Estadístico ADF} = -1.42 \quad > \quad \text{Valor crítico}_{5\%} = -2.89
+\]
+
+Como $-1.42 > -2.89$, \textbf{no rechazamos} $H_0$: $y_t$ en niveles no es estacionaria. Esto es completamente congruente con $d=1$: al aplicar $(1-B)y_t = \Delta y_t$, si la serie diferenciada resulta estacionaria (lo cual debe verificarse con ADF sobre $\Delta y_t$), una sola diferencia es suficiente para eliminar la raíz unitaria.
+
+Un SARIMA aplicado sin diferenciar cuando $y_t$ tiene raíz unitaria produce regresiones espurias: los coeficientes parecen significativos pero carecen de sentido estadístico real.
+
+% ── Inciso c ─────────────────────────────────────────────────────────────────
+\begin{cajaInciso}{c}
+Si $\hat{\beta} = -0.87$ con error estándar $0.12$, interprete económicamente su signo y magnitud. ¿Qué supuesto de exogeneidad se requiere para que $\hat{\beta}$ sea consistente?
+\end{cajaInciso}
+
+\textbf{Solución.}
+
+El coeficiente $\hat{\beta} = -0.87$ significa que, cuando la tasa del Tesoro de EE.UU.\ a 10 años sube 1 punto porcentual (100 pb), el logaritmo del precio del bono soberano cae en $0.87$ unidades, \emph{ceteris paribus}.
+
+\textbf{¿Por qué tiene sentido el signo negativo?} Es perfectamente coherente con la teoría de bonos: cuando suben las tasas de referencia en EE.UU., los inversionistas exigen mayor rendimiento a activos de riesgo similar; para que el bono soberano emergente ofrezca mayor rendimiento, su precio debe bajar. Adicionalmente, una tasa libre de riesgo más alta propicia fugas de capitales desde mercados emergentes hacia activos desarrollados, reduciendo la demanda y el precio del bono.
+
+\textbf{Supuesto de exogeneidad estricta.} Para que $\hat{\beta}$ sea consistente se requiere:
+\[
+\Cov(x_t, \eps_s) = 0 \quad \forall\; t, s
+\]
+Esto implica que la tasa del Tesoro de EE.UU.\ no reacciona a los errores del modelo del bono soberano en ningún periodo (pasado, presente ni futuro). En la práctica es razonable: la Fed fija tasas en función de condiciones macroeconómicas de EE.UU., no del precio de un bono soberano emergente individual.
+
+\begin{cajaHallazgo}
+$\hat{\beta} = -0.87$: por cada punto porcentual que sube la tasa americana, el precio del bono soberano emergente cae $\approx 87\%$ en escala logarítmica. Económicamente sensato (relación precio-tasa inversa) y la exogeneidad es plausible porque la Fed no mira este bono al fijar política monetaria.
+\end{cajaHallazgo}
+
+% ── Inciso d ─────────────────────────────────────────────────────────────────
+\begin{cajaInciso}{d}
+Construya el estadístico $t$ y el intervalo de confianza al 95\% para $\hat{\beta}$. Concluya sobre su significancia.
+\end{cajaInciso}
+
+\textbf{Solución.}
+
+El estadístico $t$ es:
+\[
+t = \frac{\hat{\beta} - 0}{\widehat{SE}(\hat{\beta})} = \frac{-0.87}{0.12} = -7.25
+\]
+
+Con $n - k \approx 154$ grados de libertad, el valor crítico al 5\% bilateral es $\approx \pm 1.96$. Como $|t| = 7.25 \gg 1.96$, \textbf{rechazamos} $H_0: \beta = 0$.
+
+El intervalo de confianza al 95\%:
+\[
+\text{IC}_{95\%}(\beta) = \hat{\beta} \pm 1.96 \cdot \widehat{SE}(\hat{\beta})
+= -0.87 \pm 1.96 \times 0.12
+= -0.87 \pm 0.2352
+= [-1.1052,\; -0.6348]
+\]
+
+El intervalo no contiene el cero, confirmando que la tasa del Tesoro americano tiene un efecto real, negativo y estadísticamente robusto sobre el precio del bono soberano emergente. El coeficiente es significativo incluso al 0.1\%.
+
+% ─────────────────────────────────────────────────────────────────────────────
+\subsection*{Ejercicio 2 \texorpdfstring{$\cdot$}{·} Prueba ARCH y motivación del GARCH}
+\addcontentsline{toc}{subsection}{Ejercicio 2: Prueba ARCH y motivación GARCH}
+% ─────────────────────────────────────────────────────────────────────────────
+
+\textbf{Contexto.} Log-rendimientos diarios del VIX: $r_t = \log(VIX_t/VIX_{t-1})$, $n=1{,}000$ observaciones.
+
+% ── Inciso a ─────────────────────────────────────────────────────────────────
+\begin{cajaInciso}{a}
+Enuncie la hipótesis nula de la prueba LM-ARCH. ¿Qué concluye con los resultados?
+\end{cajaInciso}
+
+\textbf{Solución.}
+
+La prueba LM-ARCH (Engle, 1982) contrasta:
+\[
+H_0: \alpha_1 = \alpha_2 = \cdots = \alpha_m = 0
+\quad \text{(no hay efecto ARCH de orden } m\text{)}
+\]
+\[
+H_1: \exists\, \alpha_i \neq 0 \quad \text{(existe heterocedasticidad condicional)}
+\]
+
+La prueba se implementa regresando $r_t^2$ sobre sus propios rezagos $r_{t-1}^2,\ldots,r_{t-m}^2$; el estadístico $LM = n\cdot R^2$ sigue una distribución $\chi^2(m)$ bajo $H_0$.
+
+Con los resultados:
+\[
+LM\text{-ARCH}(5): \text{estadístico} = 47.83,\; p\text{-valor} = 0.000004
+\]
+\[
+LM\text{-ARCH}(10): \text{estadístico} = 62.11,\; p\text{-valor} \approx 0
+\]
+
+Ambos $p$-valores son prácticamente cero: \textbf{rechazamos $H_0$ contundentemente}. Los rendimientos del VIX exhiben heterocedasticidad condicional significativa; los clusters de volatilidad deben modelarse explícitamente con un modelo GARCH.
+
+% ── Inciso b ─────────────────────────────────────────────────────────────────
+\begin{cajaInciso}{b}
+Demuestre que si $r_t \sim \text{ARCH}(1)$, entonces $r_t^2$ sigue un proceso AR(1) en covarianza.
+\end{cajaInciso}
+
+\textbf{Demostración.}
+
+Un proceso ARCH(1) se define como:
+\[
+r_t = \sigma_t z_t, \quad z_t \sim i.i.d.(0,1), \quad \sigmat = \omega + \alpha r_{t-1}^2
+\]
+
+Definamos la innovación $u_t = r_t^2 - \sigmat$. Esta cantidad es ruido blanco porque:
+\[
+\E_{t-1}[u_t] = \E_{t-1}[r_t^2] - \sigmat = \sigmat - \sigmat = 0
+\]
+
+Sustituyendo $\sigmat = \omega + \alpha r_{t-1}^2$ en la expresión de $r_t^2$:
+\[
+r_t^2 = \sigmat + u_t = \omega + \alpha r_{t-1}^2 + u_t
+\]
+
+Esta es exactamente la ecuación de un \textbf{AR(1) para $r_t^2$}:
+\[
+\boxed{r_t^2 = \omega + \alpha\, r_{t-1}^2 + u_t, \quad u_t \sim \text{ruido blanco}}
+\]
+
+La autocovarianza $\Cov(u_t, u_{t-k})=0$ para todo $k \neq 0$ se sigue de que $u_t$ es una diferencia de martingala.
+
+% ── Inciso c ─────────────────────────────────────────────────────────────────
+\begin{cajaInciso}{c}
+Un analista propone modelar $r_t^2$ con un AR(1) directo en lugar de un GARCH. Identifique dos limitaciones prácticas.
+\end{cajaInciso}
+
+\textbf{Solución.}
+
+\textbf{Limitación 1 -- No garantiza varianza positiva.} Un AR(1) sobre $r_t^2$ estimado por OLS puede generar predicciones negativas de la varianza cuando los parámetros caen fuera de la región de positividad. El GARCH(1,1), en cambio, garantiza $\sigmat > 0$ siempre gracias a las restricciones $\omega>0$, $\alpha\geq 0$, $\beta\geq 0$.
+
+\textbf{Limitación 2 -- Equivale solo a ARCH(1), no captura persistencia.} El GARCH(1,1) es equivalente a un AR($\infty$) sobre los cuadrados de los rendimientos, lo que le permite modelar la persistencia de la volatilidad de forma parsimoniosa con solo 2 parámetros. Un AR(1) directo solo captura la dependencia de un rezago y pierde toda la memoria larga de la varianza. Adicionalmente, el AR(1) sobre $r_t^2$ no especifica de forma integrada la densidad condicional (normal, $t$-Student), necesaria para el cálculo dinámico del VaR.
+
+% ── Inciso d ─────────────────────────────────────────────────────────────────
+\begin{cajaInciso}{d}
+Explique intuitivamente por qué la autocorrelación en $r_t^2$ pero no en $r_t$ es evidencia de heterocedasticidad condicional.
+\end{cajaInciso}
+
+\textbf{Solución.}
+
+Si $r_t$ no tiene autocorrelación, el nivel (dirección) del rendimiento hoy no predice el de mañana: el mercado es eficiente en media. Pero si $r_t^2$ sí tiene autocorrelación, la \emph{magnitud} del movimiento hoy sí predice la magnitud de mañana: los días con grandes movimientos (positivos o negativos) tienden a seguirse de días con grandes movimientos. Este es el \textbf{clustering de volatilidad}.
+
+Formalmente, $r_t^2 = \sigmat \cdot z_t^2$. Si $\sigmat$ fuera constante, $r_t^2$ sería ruido blanco (ACF nula). Si $\sigmat$ varía en el tiempo (heterocedasticidad), $r_t^2$ hereda esa variación y su ACF muestra picos significativos.
+
+\begin{cajaHallazgo}
+La doble firma del efecto ARCH: ACF de $r_t \approx 0$ (mercado eficiente en media) pero ACF de $r_t^2 \neq 0$ (volatilidad predecible). No hay oportunidades de arbitraje en la dirección del precio, pero sí información sobre la magnitud futura del riesgo.
+\end{cajaHallazgo}
+
+% ─────────────────────────────────────────────────────────────────────────────
+\subsection*{Ejercicio 3 \texorpdfstring{$\cdot$}{·} Estimación e interpretación del GARCH(1,1)}
+\addcontentsline{toc}{subsection}{Ejercicio 3: GARCH(1,1)}
+% ─────────────────────────────────────────────────────────────────────────────
+
+\textbf{Modelo:} $r_t = \mu + \eps_t$, $\eps_t = \sigma_t z_t$, $z_t \sim N(0,1)$,
+$\sigmat = \omega + \alpha\eps_{t-1}^2 + \beta\sigma_{t-1}^2$.
+
+\begin{center}
+\begin{tabular}{@{}lcccc@{}}
+\toprule
+Parámetro & Estimado & Err.\ est. & $p$-valor \\
+\midrule
+$\hat{\mu}$ & 0.041200 & 0.0318 & 0.1947 \\
+$\hat{\omega}$ & 0.028500 & 0.0091 & 0.0018 \\
+$\hat{\alpha}$ & 0.083000 & 0.0142 & 0.0000 \\
+$\hat{\beta}$ & 0.901000 & 0.0181 & 0.0000 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+% ── Inciso a ─────────────────────────────────────────────────────────────────
+\begin{cajaInciso}{a}
+Verifique la condición de estacionariedad en covarianza. ¿Se cumple?
+\end{cajaInciso}
+
+\textbf{Solución.}
+
+La condición de estacionariedad en covarianza del GARCH(1,1) es:
+\[
+\alpha + \beta < 1
+\]
+
+Con los valores estimados:
+\[
+\hat{\alpha} + \hat{\beta} = 0.083 + 0.901 = 0.984 < 1 \quad \checkmark
+\]
+
+\textbf{Sí se cumple.} Esto garantiza que la varianza incondicional de largo plazo $\sigmabar$ es finita y que la varianza condicional regresa a su media después de cualquier choque.
+
+% ── Inciso b ─────────────────────────────────────────────────────────────────
+\begin{cajaInciso}{b}
+Calcule $\sigmabar = \omega/(1 - \alpha - \beta)$ y exprésela anualizada (252 días).
+\end{cajaInciso}
+
+\textbf{Solución.}
+
+\[
+\sigmabar = \frac{\hat{\omega}}{1 - \hat{\alpha} - \hat{\beta}} = \frac{0.0285}{1 - 0.984} = \frac{0.0285}{0.016} = 1.78125 \; (\%^2)
+\]
+
+La desviación estándar incondicional diaria:
+\[
+\bar{\sigma} = \sqrt{1.78125} \approx 1.334\%
+\]
+
+Para anualizar, usando 252 días hábiles bursátiles:
+\[
+\sigmabar_{\text{anual}} = \sigmabar \times 252 = 1.78125 \times 252 = 448.88 \; (\%^2)
+\]
+\[
+\bar{\sigma}_{\text{anual}} = \bar{\sigma} \times \sqrt{252} = 1.334\% \times 15.875 \approx 21.18\%
+\]
+
+\textbf{Nota:} la \emph{varianza} escala multiplicando por $252$, mientras que la \emph{volatilidad} (desviación estándar) escala multiplicando por $\sqrt{252}$, porque la desviación estándar crece con la raíz cuadrada del tiempo bajo movimiento browniano.
+
+\begin{cajaHallazgo}
+La volatilidad de largo plazo de la acción es $\approx 21.18\%$ anualizada. Este es el nivel al que la volatilidad condicional converge después de cada choque.
+\end{cajaHallazgo}
+
+% ── Inciso c ─────────────────────────────────────────────────────────────────
+\begin{cajaInciso}{c}
+Si $\eps_t = -2.5\%$ y $\hat{\sigma}_t = 1.2\%$, calcule $\hat{\sigma}^2_{t+1}$ y $\hat{\sigma}_{t+1}$.
+\end{cajaInciso}
+
+\textbf{Solución.}
+
+\[
+\hat{\sigma}^2_{t+1} = \hat{\omega} + \hat{\alpha}\, \eps_t^2 + \hat{\beta}\, \hat{\sigma}_t^2
+= 0.0285 + 0.083 \times (-2.5)^2 + 0.901 \times (1.2)^2
+\]
+\[
+= 0.0285 + 0.083 \times 6.25 + 0.901 \times 1.44
+= 0.0285 + 0.51875 + 1.29744
+= 1.84469 \; (\%^2)
+\]
+\[
+\hat{\sigma}_{t+1} = \sqrt{1.84469} \approx 1.358\%
+\]
+
+El choque negativo $\eps_t = -2.5\%$ (más de 2 desviaciones estándar) eleva la volatilidad estimada del día siguiente de $1.2\%$ a $1.358\%$, capturando que los periodos turbulentos tienden a persistir.
+
+% ── Inciso d ─────────────────────────────────────────────────────────────────
+\begin{cajaInciso}{d}
+Muestre que $\E_t[\sigma^2_{t+h}] = \sigmabar + (\alpha+\beta)^{h-1}(\sigma^2_{t+1} - \sigmabar)$ e interprete la tasa de reversión cuando $\alpha + \beta \approx 0.98$.
+\end{cajaInciso}
+
+\textbf{Demostración.}
+
+Definamos $\tilde{\sigma}^2_{t+h} = \sigma^2_{t+h} - \sigmabar$. Tomando expectativas condicionales en la ecuación GARCH:
+\[
+\E_t[\sigma^2_{t+h}] = \omega + (\alpha+\beta)\,\E_t[\sigma^2_{t+h-1}]
+\]
+
+Restando $\sigmabar$ de ambos lados y denotando $\rho = \alpha + \beta$:
+\[
+\E_t[\tilde{\sigma}^2_{t+h}] = \rho\cdot\E_t[\tilde{\sigma}^2_{t+h-1}]
+\]
+
+Iterando $h-1$ veces:
+\[
+\E_t[\tilde{\sigma}^2_{t+h}] = \rho^{h-1}\,\tilde{\sigma}^2_{t+1}
+\]
+
+Por lo tanto:
+\[
+\boxed{\E_t[\sigma^2_{t+h}] = \sigmabar + (\alpha+\beta)^{h-1}(\sigma^2_{t+1} - \sigmabar)}
+\]
+
+\textbf{Interpretación con $\alpha + \beta = 0.984$:}
+
+La ``vida media'' del choque es el horizonte $h^*$ tal que la desviación cae a la mitad:
+\[
+(0.984)^{h^*} = 0.5 \implies h^* = \frac{\ln(0.5)}{\ln(0.984)} \approx \frac{-0.6931}{-0.01613} \approx 43 \text{ días hábiles}
+\]
+
+Un choque de volatilidad tarda aproximadamente \textbf{43 días hábiles ($\approx 2$ meses)} en reducirse a la mitad. La volatilidad financiera tiene ``memoria larga'': las crisis no se disipan rápidamente.
+
+\begin{cajaHallazgo}
+Con $\alpha+\beta=0.984$, la vida media de un choque es $\approx 43$ días. Esto explica por qué los mercados pueden permanecer en modo de alta volatilidad durante semanas o meses después de eventos como crisis financieras o shocks macroeconómicos.
+\end{cajaHallazgo}
+
+% ─────────────────────────────────────────────────────────────────────────────
+\subsection*{Ejercicio 4 \texorpdfstring{$\cdot$}{·} GJR-GARCH y efecto apalancamiento}
+\addcontentsline{toc}{subsection}{Ejercicio 4: GJR-GARCH}
+% ─────────────────────────────────────────────────────────────────────────────
+
+\textbf{Modelo:} $\sigmat = \omega + \alpha\eps_{t-1}^2 + \lambda\eps_{t-1}^2\mathbf{1}_{\{\eps_{t-1}<0\}} + \beta\sigma_{t-1}^2$
+
+Con $\hat{\omega}=0.021$, $\hat{\alpha}=0.042$, $\hat{\lambda}=0.078$, $\hat{\beta}=0.912$.
+
+% ── Inciso a ─────────────────────────────────────────────────────────────────
+\begin{cajaInciso}{a}
+Interprete $\hat{\lambda}$. ¿En qué porcentaje incrementa la volatilidad una noticia negativa frente a una positiva de igual magnitud?
+\end{cajaInciso}
+
+\textbf{Solución.}
+
+Para $|\eps_{t-1}|=c$ (mismo tamaño de choque):
+\begin{itemize}[leftmargin=*]
+  \item \textbf{Choque positivo} ($\eps_{t-1} = +c$): contribución a $\sigmat$ $= \hat{\alpha}\cdot c^2 = 0.042\,c^2$
+  \item \textbf{Choque negativo} ($\eps_{t-1} = -c$): contribución a $\sigmat$ $= (\hat{\alpha}+\hat{\lambda})\cdot c^2 = 0.120\,c^2$
+\end{itemize}
+
+\textbf{En términos de varianza condicional:}
+\[
+\text{Incremento porcentual (varianza)} = \frac{\hat{\alpha}+\hat{\lambda}}{\hat{\alpha}} - 1 = \frac{0.120}{0.042} - 1 = 1.857 \approx 185.7\%
+\]
+
+El choque negativo genera un incremento en la \emph{varianza condicional} casi el triple que el positivo de igual magnitud.
+
+\textbf{En términos de volatilidad (desviación estándar):} dado que $\sigma_t = \sqrt{\sigmat}$, el impacto sobre la volatilidad es:
+\[
+\text{Incremento porcentual (volatilidad)} = \sqrt{\frac{\hat{\alpha}+\hat{\lambda}}{\hat{\alpha}}} - 1 = \sqrt{\frac{0.120}{0.042}} - 1 = \sqrt{2.857} - 1 \approx 1.690 - 1 = 69.0\%
+\]
+
+\textbf{Interpretación:} un choque negativo incrementa la \emph{volatilidad} en aproximadamente un $69\%$ adicional respecto al choque positivo de igual magnitud (o, equivalentemente, la \emph{varianza} en un $185.7\%$ adicional). Este es el efecto apalancamiento: las caídas de precio elevan el ratio deuda/capital de las empresas, incrementando el riesgo percibido y la volatilidad futura.
+
+% ── Inciso b ─────────────────────────────────────────────────────────────────
+\begin{cajaInciso}{b}
+Construya la Curva de Impacto de Noticias (NIC) para $\eps \in \{-3,-2,-1,0,1,2,3\}$, fijando $\sigma^2_{t-1} = \sigmabar$. Compárela con la NIC del GARCH(1,1) simétrico.
+\end{cajaInciso}
+
+\textbf{Solución.}
+
+La varianza incondicional del GJR-GARCH (asumiendo innovaciones simétricas, $P(\eps_{t-1}<0)\approx 0.5$):
+\[
+\sigmabar = \frac{\omega}{1 - \alpha - \lambda/2 - \beta} = \frac{0.021}{1 - 0.042 - 0.039 - 0.912} = \frac{0.021}{0.007} = 3.0 \; (\%^2)
+\]
+
+NIC del GJR-GARCH fijando $\sigma^2_{t-1}=3.0$:
+\[
+\text{NIC}_{\text{GJR}}(\eps) = 2.757 +
+\begin{cases}
+0.120\,\eps^2 & \text{si } \eps < 0 \\
+0.042\,\eps^2 & \text{si } \eps \geq 0
+\end{cases}
+\]
+
+donde $2.757 = \omega + \beta\cdot\sigmabar = 0.021 + 0.912\times3.0$.
+
+NIC del GARCH(1,1) simétrico (con $\lambda=0$): $\text{NIC}_{\text{GARCH}}(\eps) = 2.757 + 0.042\,\eps^2$.
+
+\begin{center}
+\begin{tabular}{@{}rcccc@{}}
+\toprule
+$\eps$ & $\eps^2$ & $\mathbf{1}_{\{\eps<0\}}$ & NIC$_{\text{GJR}}$ $(\%^2)$ & NIC$_{\text{GARCH}}$ $(\%^2)$ \\
+\midrule
+$-3$ & 9 & 1 & $2.757 + 1.080 = 3.837$ & $2.757 + 0.378 = 3.135$ \\
+$-2$ & 4 & 1 & $2.757 + 0.480 = 3.237$ & $2.757 + 0.168 = 2.925$ \\
+$-1$ & 1 & 1 & $2.757 + 0.120 = 2.877$ & $2.757 + 0.042 = 2.799$ \\
+$\phantom{-}0$ & 0 & 0 & $2.757$ & $2.757$ \\
+$+1$ & 1 & 0 & $2.757 + 0.042 = 2.799$ & $2.757 + 0.042 = 2.799$ \\
+$+2$ & 4 & 0 & $2.757 + 0.168 = 2.925$ & $2.757 + 0.168 = 2.925$ \\
+$+3$ & 9 & 0 & $2.757 + 0.378 = 3.135$ & $2.757 + 0.378 = 3.135$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+La NIC del GJR-GARCH es asimétrica: idéntica al GARCH para choques positivos, pero notablemente más alta para choques negativos. La NIC del GARCH es simétrica (parabólica con eje en $\eps=0$).
+
+% ── Inciso c ─────────────────────────────────────────────────────────────────
+\begin{cajaInciso}{c}
+Enuncie la condición de estacionariedad en covarianza del GJR-GARCH. ¿Se satisface?
+\end{cajaInciso}
+
+\textbf{Solución.}
+
+La condición es:
+\[
+\alpha + \frac{\lambda}{2} + \beta < 1
+\]
+
+El factor $\lambda/2$ aparece porque el término de apalancamiento se activa solo cuando $\eps_{t-1}<0$, que ocurre aproximadamente la mitad del tiempo bajo distribuciones simétricas.
+
+\[
+0.042 + \frac{0.078}{2} + 0.912 = 0.042 + 0.039 + 0.912 = 0.993 < 1 \quad \checkmark
+\]
+
+\textbf{Sí se satisface.} La persistencia de 0.993 es extremadamente alta, implicando reversión muy lenta a la varianza de largo plazo.
+
+% ── Inciso d ─────────────────────────────────────────────────────────────────
+\begin{cajaInciso}{d}
+¿Por qué el efecto apalancamiento es relevante para el cálculo del VaR en portafolios de renta variable?
+\end{cajaInciso}
+
+\textbf{Solución.}
+
+El VaR al nivel $\alpha$ es $\text{VaR}_\alpha = -(\mu + z_\alpha\cdot\sigma_t)$. Si se usa un GARCH simétrico cuando el verdadero proceso tiene efecto apalancamiento, se \textbf{subestima} $\sigma_t$ en periodos de caída del mercado. Esto es exactamente cuando el VaR importa más: en las caídas.
+
+El efecto apalancamiento implica que cuando el mercado cae (malas noticias), la volatilidad del día siguiente sube más de lo que un GARCH estándar predice. Si el VaR se basa en esa $\sigma_t$ subestimada, el banco o fondo tendrá menos capital reservado del necesario en los peores momentos, lo cual es inaceptable bajo Basilea III.
+
+\begin{cajaHallazgo}
+Para portafolios de renta variable, ignorar la asimetría puede llevar a VaRs que subestiman el riesgo real hasta en un 30\%--50\% en periodos de estrés. El efecto apalancamiento no es un detalle técnico: es la diferencia entre reservar capital suficiente en una crisis o quedarse corto cuando más se necesita.
+\end{cajaHallazgo}
+
+% ─────────────────────────────────────────────────────────────────────────────
+\subsection*{Ejercicio 5 \texorpdfstring{$\cdot$}{·} EGARCH: logaritmo de la varianza y asimetría}
+\addcontentsline{toc}{subsection}{Ejercicio 5: EGARCH}
+% ─────────────────────────────────────────────────────────────────────────────
+
+\textbf{Modelo EGARCH(1,1) de Nelson (1991):}
+\[
+\log\sigmat = \omega + \beta\log\sigma^2_{t-1} + \alpha\!\left(\frac{|\eps_{t-1}|}{\sigma_{t-1}} - \sqrt{\frac{2}{\pi}}\right) + \gamma\frac{\eps_{t-1}}{\sigma_{t-1}}
+\]
+
+Estimación: $\hat{\omega}=-0.085$, $\hat{\alpha}=0.112$, $\hat{\gamma}=-0.063$, $\hat{\beta}=0.979$.
+
+% ── Inciso a ─────────────────────────────────────────────────────────────────
+\begin{cajaInciso}{a}
+Explique dos ventajas del EGARCH frente al GARCH estándar: (i) restricciones paramétricas y (ii) captura de asimetría.
+\end{cajaInciso}
+
+\textbf{Solución.}
+
+\textbf{Ventaja (i) -- Restricciones paramétricas.} El GARCH estándar requiere $\omega>0$, $\alpha\geq 0$, $\beta\geq 0$ para garantizar $\sigmat>0$. El EGARCH modela $\log\sigmat$; como el logaritmo puede tomar cualquier valor real, los parámetros pueden ser negativos o positivos sin restricciones de signo. La positividad de $\sigmat$ está automáticamente garantizada porque $\exp(\text{cualquier número})>0$ siempre.
+
+\textbf{Ventaja (ii) -- Captura de asimetría.} El GARCH estándar solo tiene el término $\alpha\eps_{t-1}^2$, simétrico: un choque de $+c$ y uno de $-c$ tienen exactamente el mismo efecto. El EGARCH incorpora el término $\gamma\frac{\eps_{t-1}}{\sigma_{t-1}}$ (choque estandarizado con signo), que permite que choques positivos y negativos tengan efectos diferentes sobre la volatilidad.
+
+% ── Inciso b ─────────────────────────────────────────────────────────────────
+\begin{cajaInciso}{b}
+Interprete el signo de $\hat{\gamma} = -0.063$. ¿Confirma el efecto apalancamiento?
+\end{cajaInciso}
+
+\textbf{Solución.}
+
+El término $\gamma\frac{\eps_{t-1}}{\sigma_{t-1}}$ funciona así:
+\begin{itemize}[leftmargin=*]
+  \item Si $\eps_{t-1}>0$ (buena noticia): contribuye $+\hat{\gamma}\cdot|z_{t-1}|<0$ (reduce $\log\sigmat$).
+  \item Si $\eps_{t-1}<0$ (mala noticia): contribuye $-\hat{\gamma}\cdot|z_{t-1}|>0$ (aumenta $\log\sigmat$).
+\end{itemize}
+
+Con $\hat{\gamma}=-0.063<0$: \textbf{sí confirma el efecto apalancamiento}. Las malas noticias incrementan la volatilidad futura más que las buenas noticias de igual magnitud. Este patrón es sistemático en activos de renta fija de alto rendimiento (High Yield): cuando el mercado vende, los spreads se abren y la volatilidad explota más de lo que la recuperación la reduce.
+
+% ── Inciso c ─────────────────────────────────────────────────────────────────
+\begin{cajaInciso}{c}
+Calcule el impacto marginal en $\log\sigmat$ de $z_{t-1}=+2$ versus $z_{t-1}=-2$.
+\end{cajaInciso}
+
+\textbf{Solución.}
+
+La función de impacto del choque es:
+\[
+f(z) = \hat{\alpha}\!\left(|z| - \sqrt{\frac{2}{\pi}}\right) + \hat{\gamma}\,z
+\]
+
+Con $\sqrt{2/\pi}\approx 0.7979$:
+
+\textbf{Para $z_{t-1}=+2$:}
+\[
+f(+2) = 0.112(2 - 0.7979) + (-0.063)(2) = 0.112\times 1.2021 - 0.126 = 0.13464 - 0.126 = 0.00864
+\]
+
+\textbf{Para $z_{t-1}=-2$:}
+\[
+f(-2) = 0.112(2 - 0.7979) + (-0.063)(-2) = 0.13464 + 0.126 = 0.26064
+\]
+
+Un choque negativo de magnitud 2 incrementa $\log\sigmat$ en $0.261$, mientras que un choque positivo de la misma magnitud solo la incrementa en $0.009$. El impacto asimétrico es dramático: la mala noticia genera aproximadamente \textbf{30 veces más} incremento en la volatilidad logarítmica que la buena noticia.
+
+% ── Inciso d ─────────────────────────────────────────────────────────────────
+\begin{cajaInciso}{d}
+Un estudiante afirma que $|\hat{\beta}|=0.979<1$ garantiza estacionariedad del EGARCH. ¿Es condición suficiente?
+\end{cajaInciso}
+
+\textbf{Solución.}
+
+\textbf{No es condición suficiente.} La afirmación es parcialmente correcta pero incompleta.
+
+Para el EGARCH, $|\beta|<1$ es condición \emph{necesaria} para que el componente autorregresivo de $\log\sigmat$ no explote. Sin embargo, la condición suficiente de estacionariedad estricta del EGARCH es más compleja y depende de la distribución de $z_t$. Nelson (1991) demostró que el EGARCH es estrictamente estacionario si y solo si:
+\[
+\E\!\left[\log\!\left|\beta + \alpha|z| + \gamma z\right|\right] < 0
+\]
+
+Esta condición no se reduce simplemente a $|\beta|<1$ cuando los parámetros $\alpha$ y $\gamma$ son no nulos. En la práctica, con $|\beta|$ significativamente menor que 1 y valores pequeños de $\alpha$, $\gamma$, la condición de Nelson suele satisfacerse, pero debe verificarse formalmente.
+
+\begin{cajaHallazgo}
+En el EGARCH, $|\beta|<1$ es condición necesaria pero \textbf{no suficiente} para estacionariedad. La verificación rigurosa requiere evaluar la condición de Nelson (1991): $\E[\log|\beta+\alpha|z|+\gamma z|]<0$.
+\end{cajaHallazgo}
+
+% ─────────────────────────────────────────────────────────────────────────────
+\subsection*{Ejercicio 6 \texorpdfstring{$\cdot$}{·} GARCH-M: prima de riesgo dependiente de la volatilidad}
+\addcontentsline{toc}{subsection}{Ejercicio 6: GARCH-M}
+% ─────────────────────────────────────────────────────────────────────────────
+
+\textbf{Modelo GARCH-M:} $r_t = \mu + \delta\sigma_t + \eps_t$, $\;\sigmat = \omega + \alpha\eps_{t-1}^2 + \beta\sigma_{t-1}^2$.
+
+Estimación (fondo de capital privado, trimestral): $\hat{\mu}=0.012$, $\hat{\delta}=0.38$, $\hat{\omega}=0.0003$, $\hat{\alpha}=0.11$, $\hat{\beta}=0.86$.
+
+% ── Inciso a ─────────────────────────────────────────────────────────────────
+\begin{cajaInciso}{a}
+Interprete $\hat{\delta}=0.38$ en términos de la relación riesgo-retorno.
+\end{cajaInciso}
+
+\textbf{Solución.}
+
+El coeficiente $\hat{\delta}=0.38$ es la \textbf{prima de riesgo por unidad de volatilidad}. Por cada punto porcentual adicional de volatilidad condicional $\sigma_t$, el rendimiento esperado aumenta en $0.38$ puntos porcentuales. En el contexto del GARCH-M:
+\[
+\E_t[r_{t+1}] = \hat{\mu} + \hat{\delta}\,\sigma_{t+1} = 0.012 + 0.38\,\sigma_{t+1}
+\]
+
+Esto formaliza la idea central de la teoría de portafolios (CAPM y sus extensiones): a mayor riesgo, mayor rendimiento esperado. Un $\hat{\delta}>0$ estadísticamente significativo confirma que los inversionistas son aversos al riesgo y exigen compensación cuando la incertidumbre aumenta.
+
+% ── Inciso b ─────────────────────────────────────────────────────────────────
+\begin{cajaInciso}{b}
+Si $\hat{\sigma}_t=0.08$ (8\%), calcule $\E_t[r_{t+1}]$ y expréselo anualizado.
+\end{cajaInciso}
+
+\textbf{Solución.}
+
+\[
+\E_t[r_{t+1}] = 0.012 + 0.38\times 0.08 = 0.012 + 0.0304 = 0.0424 \quad (4.24\% \text{ trimestral})
+\]
+
+Anualización (4 trimestres):
+\begin{enumerate}[leftmargin=*]
+  \item Lineal (aritmética): $4.24\% \times 4 = 16.96\%$
+  \item Compuesta (efectiva): $(1+0.0424)^4 - 1 \approx 18.06\%$
+\end{enumerate}
+
+En un trimestre con $8\%$ de volatilidad (alta para capital privado), el fondo compensa a los inversionistas con un rendimiento esperado de $\approx 18\%$ anual, reflejando la prima por iliquidez y riesgo del capital privado.
+
+% ── Inciso c ─────────────────────────────────────────────────────────────────
+\begin{cajaInciso}{c}
+Derive la varianza incondicional de $r_t$ en el GARCH-M. ¿Difiere del GARCH estándar?
+\end{cajaInciso}
+
+\textbf{Solución.}
+
+En el GARCH-M, $r_t = \mu + \delta\sigma_t + \eps_t$ donde $\eps_t = \sigma_t z_t$, de modo que:
+\[
+r_t = \mu + \sigma_t(\delta + z_t)
+\]
+
+Dado que $\sigma_t$ es medible respecto a $\mathcal{I}_{t-1}$ y $z_t \sim i.i.d.(0,1)$ independiente de $\mathcal{I}_{t-1}$, aplicando la ley de varianza total:
+\[
+\Var(r_t) = \E\!\left[\sigma_t^2(\delta + z_t)^2\right]
+= \E\!\left[\sigma_t^2\right]\cdot\E\!\left[(\delta + z_t)^2\right]
+= \E[\sigma_t^2]\cdot\left(\delta^2 + 1\right)
+\]
+
+El paso clave es que $\E[\sigma_t^2] = \sigmabar = \omega/(1-\alpha-\beta)$, la varianza incondicional del proceso GARCH. Este resultado usa la ley de expectativas iteradas y la estacionariedad en covarianza. Por tanto:
+\[
+\Var(r_t) = \sigmabar\,(1 + \delta^2)
+\]
+
+\textbf{Sí difiere del GARCH estándar.} En el GARCH estándar (sin término-M): $\Var(r_t) = \sigmabar$. El factor adicional $(1+\delta^2)$ en el GARCH-M refleja la variabilidad extra aportada por la prima de riesgo dinámica $\delta\sigma_t$.
+
+\textbf{Nota técnica:} La fórmula $\Var(r_t) = \sigmabar(1+\delta^2)$ utiliza $\E[\sigma_t^2]=\sigmabar$ pero \emph{no} requiere conocer $\Var(\sigma_t)$ por separado, pues el cálculo opera directamente con el segundo momento de $\sigma_t$. Calcular $\Var(\sigma_t) = \E[\sigma_t^2] - (\E[\sigma_t])^2$ requeriría información adicional sobre la distribución de $\sigma_t$ (en particular $\E[\sigma_t]$, que no se obtiene de forma cerrada en el GARCH estándar).
+
+Con $\hat{\delta}=0.38$:
+\[
+\Var(r_t)^{\text{GARCH-M}} = (1 + 0.38^2)\,\sigmabar = 1.1444\,\sigmabar
+\]
+
+% ── Inciso d ─────────────────────────────────────────────────────────────────
+\begin{cajaInciso}{d}
+Proponga una aplicación para estimar el Sharpe Ratio dinámico de un portafolio de renta variable emergente.
+\end{cajaInciso}
+
+\textbf{Solución.}
+
+El Sharpe Ratio estático usa parámetros fijos. El GARCH-M permite construir un \textbf{Sharpe Ratio dinámico}:
+\[
+SR_t = \frac{\E_t[r_{t+1}] - r_f}{\hat{\sigma}_{t+1}} = \frac{\hat{\mu} + \hat{\delta}\,\hat{\sigma}_{t+1} - r_f}{\hat{\sigma}_{t+1}} = \hat{\delta} + \frac{\hat{\mu} - r_f}{\hat{\sigma}_{t+1}}
+\]
+
+\textbf{Aplicación práctica:}
+\begin{enumerate}[leftmargin=*]
+  \item Estimar GARCH-M sobre rendimientos mensuales del índice MSCI Mercados Emergentes.
+  \item En cada periodo $t$, calcular $\hat{\sigma}_{t+1}$ y $\E_t[r_{t+1}]$ con el modelo.
+  \item Obtener $SR_t$ dinámico y graficarlo en el tiempo.
+  \item Usar el $SR_t$ para ajustar dinámicamente la ponderación de renta variable emergente en un portafolio: sobreponderar cuando $SR_t$ es alto (periodo calmo, buen compensación relativa) y subponderar cuando $SR_t$ cae (periodos de estrés con alta volatilidad).
+\end{enumerate}
+
+\begin{cajaHallazgo}
+El GARCH-M conecta el riesgo medido en tiempo real ($\sigma_t$) con el rendimiento requerido, permitiendo ajustar dinámicamente la composición del portafolio según el régimen de mercado.
+\end{cajaHallazgo}
+
+% ─────────────────────────────────────────────────────────────────────────────
+\subsection*{Ejercicio 7 \texorpdfstring{$\cdot$}{·} Validación completa de un modelo ARIMA-GARCH}
+\addcontentsline{toc}{subsection}{Ejercicio 7: Validación ARIMA-GARCH}
+% ─────────────────────────────────────────────────────────────────────────────
+
+\textbf{Modelo:} ARIMA(1,1,1)+GARCH(1,1) ajustado a rendimientos diarios del MXN/USD.
+
+\begin{center}
+\begin{tabular}{@{}llccc@{}}
+\toprule
+Prueba & & Estadístico & $p$-valor & $H_0$ \\
+\midrule
+LB $\hat{z}_t$ (lag 10)   & & 9.841  & 0.3621 & Sin autocorr.\ en $\hat{z}_t$ \\
+LB $\hat{z}_t^2$ (lag 10) & & 8.203  & 0.5118 & Sin autocorr.\ en $\hat{z}_t^2$ \\
+Jarque-Bera               & & 28.470 & 0.0000 & Normalidad \\
+Sign-Bias Test            & & 1.842  & 0.0656 & Sin asimetría de signo \\
+Negative-Size-Bias        & & 2.971  & 0.0031 & Sin efecto magnitud negativa \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+% ── Inciso a ─────────────────────────────────────────────────────────────────
+\begin{cajaInciso}{a}
+¿Captura el modelo la autocorrelación en media y la heterocedasticidad? Justifique con los $p$-valores.
+\end{cajaInciso}
+
+\textbf{Solución.}
+
+\textbf{Autocorrelación en media -- LB sobre $\hat{z}_t$:} Con $p=0.3621>0.05$, no rechazamos $H_0$. El componente ARIMA(1,1,1) capturó correctamente toda la autocorrelación en media.
+
+\textbf{Heterocedasticidad -- LB sobre $\hat{z}_t^2$:} Con $p=0.5118>0.05$, no rechazamos $H_0$. El componente GARCH(1,1) eliminó el clustering de volatilidad.
+
+\textbf{Conclusión:} Ambas dimensiones del modelo funcionan correctamente. El ARIMA se encarga de la media y el GARCH de la varianza, dejando residuales estandarizados que se comportan como ruido blanco en ambas dimensiones.
+
+% ── Inciso b ─────────────────────────────────────────────────────────────────
+\begin{cajaInciso}{b}
+El JB rechaza normalidad con curtosis $=5.2$. Proponga una distribución alternativa y reescriba la log-verosimilitud.
+\end{cajaInciso}
+
+\textbf{Solución.}
+
+Con curtosis $=5.2>3$ (exceso de curtosis $=2.2$), los residuales tienen colas más pesadas que la normal. Se propone la \textbf{distribución $t$-Student con $\nu$ grados de libertad}.
+
+Para estimar $\nu$ a partir de la curtosis observada (usando curtosis de la $t$: $3+6/(\nu-4)$ para $\nu>4$):
+\[
+5.2 = 3 + \frac{6}{\nu-4} \implies \nu \approx 6.73 \text{ g.l.}
+\]
+
+La log-verosimilitud del GARCH con innovaciones $t$-Student:
+\begin{align*}
+\ell(\theta) &= \sum_{t=1}^{T} \left[ \log\Gamma\!\left(\frac{\nu+1}{2}\right) - \log\Gamma\!\left(\frac{\nu}{2}\right) - \frac{1}{2}\log(\pi(\nu-2)) \right. \\
+&\quad \left. - \frac{1}{2}\log\hat{\sigma}_t^2 - \frac{\nu+1}{2}\log\!\left(1 + \frac{\hat{z}_t^2}{\nu-2}\right) \right]
+\end{align*}
+
+donde $\hat{z}_t = \hat{\eps}_t/\hat{\sigma}_t$. El parámetro $\nu$ se estima conjuntamente con $(\omega,\alpha,\beta)$ por máxima verosimilitud.
+
+% ── Inciso c ─────────────────────────────────────────────────────────────────
+\begin{cajaInciso}{c}
+El Negative-Size-Bias rechaza $H_0$ al 1\%. ¿Qué implica y qué modelo alternativo conviene?
+\end{cajaInciso}
+
+\textbf{Solución.}
+
+El Negative-Size-Bias (Engle y Ng, 1993) prueba si los choques negativos \emph{grandes} tienen un efecto desproporcionado sobre la volatilidad futura comparado con lo que el GARCH actual predice. Un $p$-valor $=0.0031<0.01$ confirma que \textbf{existe} este efecto asimétrico no capturado.
+
+Implicación: el GARCH(1,1) simétrico subestima la volatilidad posterior a depreciaciones fuertes del peso mexicano. Esto es importante para el MXN/USD porque las depreciaciones grandes suelen generar pánico y amplificar la volatilidad.
+
+\textbf{Modelos alternativos recomendados:}
+\begin{enumerate}[leftmargin=*]
+  \item \textbf{GJR-GARCH(1,1,1):} añade $\lambda\eps_{t-1}^2\mathbf{1}_{\{\eps_{t-1}<0\}}$. Directo y parsimónico.
+  \item \textbf{EGARCH(1,1):} modela $\log\sigmat$ con término asimétrico $\gamma z_{t-1}$. No requiere restricciones de positividad.
+\end{enumerate}
+
+% ── Inciso d ─────────────────────────────────────────────────────────────────
+\begin{cajaInciso}{d}
+Defina un protocolo completo de validación GARCH en 5 pasos con su prueba correspondiente.
+\end{cajaInciso}
+
+\textbf{Protocolo de validación GARCH:}
+
+\begin{enumerate}[leftmargin=*, label=\textbf{Paso \arabic*.}]
+  \item \textbf{Verificar ausencia de autocorrelación en $\hat{z}_t$:} Ljung-Box sobre $\hat{z}_t$. Si $p>0.05$: ARIMA capturó correctamente la media condicional.
+  \item \textbf{Verificar ausencia de heterocedasticidad residual en $\hat{z}_t^2$:} Ljung-Box sobre $\hat{z}_t^2$ y prueba LM-ARCH. Si $p>0.05$: GARCH capturó toda la estructura de la varianza.
+  \item \textbf{Verificar distribución de $\hat{z}_t$:} Prueba Jarque-Bera. Si se rechaza normalidad, reestimar con distribución $t$-Student o GED.
+  \item \textbf{Verificar ausencia de asimetría no capturada:} Pruebas Sign-Bias, Negative-Size-Bias y Positive-Size-Bias (Engle y Ng, 1993). Si alguna rechaza $H_0$: considerar EGARCH o GJR-GARCH.
+  \item \textbf{Validación fuera de muestra (backtesting):} Evaluar el VaR con la prueba de cobertura incondicional de Kupiec (1995) y cobertura condicional de Christoffersen (1998). La tasa de violaciones del VaR debe ser estadísticamente consistente con el nivel nominal.
+\end{enumerate}
+
+\begin{cajaHallazgo}
+Un AIC bajo es condición necesaria pero no suficiente. El protocolo de 5 pasos garantiza que el modelo sea adecuado en todas las dimensiones: media, varianza, distribución, asimetría y desempeño predictivo fuera de muestra.
+\end{cajaHallazgo}
+
+% ─────────────────────────────────────────────────────────────────────────────
+\subsection*{Ejercicio 8 \texorpdfstring{$\cdot$}{·} VaR dinámico con GARCH}
+\addcontentsline{toc}{subsection}{Ejercicio 8: VaR dinámico GARCH}
+% ─────────────────────────────────────────────────────────────────────────────
+
+\textbf{Modelo:} GARCH(1,1)-$t$ con $\hat{\nu}=6.2$ g.l.\ Posición: \$10,000,000.
+$\hat{\mu}=0.045\%$, $\hat{\omega}=0.032$, $\hat{\alpha}=0.091$, $\hat{\beta}=0.895$, $\hat{\sigma}_t=1.84\%$.
+Cuantiles: $t_{0.05;\,6.2}=-1.9432$, $\;t_{0.01;\,6.2}=-3.1427$.
+
+% ── Inciso a ─────────────────────────────────────────────────────────────────
+\begin{cajaInciso}{a}
+Calcule el VaR al 95\% y 99\% a 1 día en dólares.
+\end{cajaInciso}
+
+\textbf{Solución.}
+
+\[
+\text{VaR}_{1-\alpha} = -\left(\hat{\mu} + t_{\alpha,\hat{\nu}}\cdot\hat{\sigma}_t\right)\times\text{Posición}
+\]
+
+\textbf{VaR al 95\%:}
+\[
+\text{VaR}_{95\%} = -(0.045\% + (-1.9432)\times1.84\%)\times\$10{,}000{,}000
+= -(-3.5305\%)\times\$10{,}000{,}000 = \$353{,}050
+\]
+
+\textbf{VaR al 99\%:}
+\[
+\text{VaR}_{99\%} = -(0.045\% + (-3.1427)\times1.84\%)\times\$10{,}000{,}000
+= 5.7376\%\times\$10{,}000{,}000 = \$573{,}760
+\]
+
+Con 99\% de confianza, la pérdida máxima de la posición de \$10M en un día no excederá \$573,760. Solo hay un 1\% de probabilidad de pérdidas mayores.
+
+% ── Inciso b ─────────────────────────────────────────────────────────────────
+\begin{cajaInciso}{b}
+Aplique la square-root-of-time rule para VaR a 10 días y discuta una limitación importante en contexto GARCH.
+\end{cajaInciso}
+
+\textbf{Solución.}
+
+\[
+\text{VaR}_{99\%,\,10\text{d}} = \text{VaR}_{99\%,\,1\text{d}}\times\sqrt{10} = \$573{,}760\times 3.1623\approx\$1{,}814{,}180
+\]
+
+\textbf{Limitación crítica en contexto GARCH:} La regla $\sqrt{h}$ es exacta solo si los rendimientos son i.i.d.\ con varianza constante. Con GARCH, la varianza de los próximos 10 días no es $10\times\hat{\sigma}_t^2$, sino que depende de la trayectoria futura de la varianza condicional. La forma correcta es iterar la ecuación GARCH:
+\[
+\E_t[\sigma^2_{t+k}] = \sigmabar + (\hat{\alpha}+\hat{\beta})^{k-1}(\hat{\sigma}^2_{t+1} - \sigmabar)
+\]
+y acumular: $\sigma^2_{1:10} = \sum_{k=1}^{10}\E_t[\sigma^2_{t+k}]$.
+
+La regla $\sqrt{h}$ \textbf{sobreestima} el VaR a 10 días cuando la volatilidad actual está por encima de su media (el GARCH predice reversión), y lo \textbf{subestima} cuando está por debajo.
+
+% ── Inciso c ─────────────────────────────────────────────────────────────────
+\begin{cajaInciso}{c}
+Compare el VaR-GARCH con el VaR histórico (volatilidad constante $=1.84\%$). ¿Cuándo difieren significativamente?
+\end{cajaInciso}
+
+\textbf{Solución.}
+
+Con volatilidad constante $\bar{\sigma}=1.84\%$ y distribución normal:
+\[
+\text{VaR}_{99\%}^{\text{histórico}} = -(0.045\% - 2.326\times1.84\%)\times\$10{,}000{,}000
+\approx 4.235\%\times\$10{,}000{,}000 = \$423{,}500
+\]
+
+El VaR-GARCH ($t$) da \$573,760 vs.\ el VaR histórico (normal) de \$423,500: una diferencia de $\approx 35\%$.
+
+Difieren significativamente en tres escenarios:
+\begin{itemize}[leftmargin=*]
+  \item \textbf{Periodos de estrés:} cuando $\hat{\sigma}_t$ está por encima de su media histórica, el GARCH genera un VaR mayor. Es precisamente cuando más importa: en crisis, el VaR histórico subestima el riesgo real.
+  \item \textbf{Distribución de colas pesadas:} el uso de $t$-Student captura eventos extremos más frecuentes que la normal. La diferencia entre VaR con $t$ vs.\ normal puede ser del 20\%--50\% según los grados de libertad.
+  \item \textbf{Periodos tranquilos:} si $\hat{\sigma}_t<\bar{\sigma}$, el GARCH generará un VaR menor que el histórico, reconociendo que el riesgo actual es menor al promedio.
+\end{itemize}
+
+% ── Inciso d ─────────────────────────────────────────────────────────────────
+\begin{cajaInciso}{d}
+Explique el backtesting de Kupiec (1995) y cómo aplicarlo con 250 días.
+\end{cajaInciso}
+
+\textbf{Solución.}
+
+El backtesting de Kupiec (cobertura incondicional) verifica si la tasa de violaciones del VaR es estadísticamente consistente con el nivel nominal.
+
+Una violación ocurre cuando la pérdida real supera el VaR predicho: $I_t = \mathbf{1}_{\{r_t < -\text{VaR}_t\}}$.
+
+Sea $x$ el número de violaciones observadas en $T=250$ días. Bajo $H_0$ (modelo correcto), $x\sim\text{Binomial}(T,p)$ con $p$ la probabilidad nominal de violación.
+
+El estadístico de razón de verosimilitud:
+\[
+LR_{\text{Kupiec}} = -2\ln\!\left[\frac{p^x(1-p)^{T-x}}{(\hat{p})^x(1-\hat{p})^{T-x}}\right] \sim \chi^2(1)
+\]
+
+donde $\hat{p}=x/T$.
+
+\textbf{Aplicación con $T=250$ días y VaR al 99\%:}
+\begin{itemize}[leftmargin=*]
+  \item Violaciones esperadas: $E[x]=250\times 0.01=2.5$
+  \item Rango aceptable (no rechazo al 5\%): aproximadamente $[0, 6]$ violaciones.
+  \item Si $x=8$: $\hat{p}=8/250=3.2\%>1\%$. Calcular $LR$ y comparar con $\chi^2_{0.05,1}=3.84$. Si $LR>3.84$, el modelo es inadecuado.
+\end{itemize}
+
+\begin{cajaPista}
+Kupiec responde: ``¿El modelo se equivocó demasiadas veces?'' Si el VaR al 99\% se viola 15 veces en 250 días ($6\%$), el modelo está fallando gravemente. Si se viola 2 veces ($0.8\%$), es conservador pero no necesariamente incorrecto. El test formaliza estadísticamente esta intuición.
+\end{cajaPista}
+
+% ─────────────────────────────────────────────────────────────────────────────
+\subsection*{Ejercicio 9 \texorpdfstring{$\cdot$}{·} SARIMAX multivariable para precio de materias primas}
+\addcontentsline{toc}{subsection}{Ejercicio 9: SARIMAX WTI}
+% ─────────────────────────────────────────────────────────────────────────────
+
+\textbf{Modelo:} SARIMAX$(0,1,1)(1,1,0)_{12}$ para precio mensual WTI (log) con REER ($x_{1t}$) y PMI global ($x_{2t}$):
+\[
+(1-\hat{\Phi}B^{12})(1-B)(1-B^{12})\log P_t = \hat{\beta}_1 x_{1t} + \hat{\beta}_2 x_{2t} + (1+\hat{\theta}B)\eps_t
+\]
+
+\begin{center}
+\begin{tabular}{@{}lcccc@{}}
+\toprule
+Parámetro & Estimado & Err.\ est. & $p$-valor \\
+\midrule
+$\hat{\theta}$  & $-0.6340$ & 0.0821 & 0.0000 \\
+$\hat{\Phi}$    & $-0.2910$ & 0.0654 & 0.0000 \\
+$\hat{\beta}_1$ & $-0.4120$ & 0.1340 & 0.0022 \\
+$\hat{\beta}_2$ & $+0.5870$ & 0.2100 & 0.0053 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+% ── Inciso a ─────────────────────────────────────────────────────────────────
+\begin{cajaInciso}{a}
+Interprete $\hat{\beta}_1=-0.412$ y $\hat{\beta}_2=0.587$. ¿Son coherentes con la teoría?
+\end{cajaInciso}
+
+\textbf{Solución.}
+
+\textbf{$\hat{\beta}_1=-0.412$ (REER):} El REER mide el valor del dólar frente a una cesta de monedas, ajustado por inflación. El petróleo WTI se cotiza en dólares. Cuando el REER sube (dólar se aprecia), los compradores en otras monedas lo encuentran más caro, reduciendo la demanda y el precio. El signo negativo es completamente coherente: dólar fuerte $\Rightarrow$ petróleo más barato en dólares.
+
+\textbf{$\hat{\beta}_2=+0.587$ (PMI global):} El PMI es un indicador de actividad manufacturera global. Un PMI alto indica expansión económica y mayor demanda de energía. El signo positivo es económicamente sensato: más actividad global $\Rightarrow$ más demanda de petróleo $\Rightarrow$ precio más alto. \textbf{Ambos coeficientes son coherentes con la teoría económica.}
+
+% ── Inciso b ─────────────────────────────────────────────────────────────────
+\begin{cajaInciso}{b}
+Construya un pronóstico puntual a 3 meses si $\Delta x_{1,t+k}=0$ y $\Delta x_{2,t+k}=+1.5$ para $k=1,2,3$ (suponga rezagos AR y MA ya nulos al horizonte 3).
+\end{cajaInciso}
+
+\textbf{Solución.}
+
+Con $\Delta x_{1,t+k}=0$ y $\Delta x_{2,t+k}=1.5$ para $k=1,2,3$, y rezagos AR/MA nulos, la contribución de las exógenas al cambio acumulado en $\log P_t$ durante 3 meses es:
+\[
+\sum_{k=1}^{3}\left(\hat{\beta}_1\cdot 0 + \hat{\beta}_2\cdot 1.5\right) = 3\times(0+0.587\times1.5) = 3\times 0.8805 = 2.6415
+\]
+
+Esto representa un incremento de $2.6415$ en el log-precio, equivalente a:
+\[
+\frac{P_{t+3}}{P_t} \approx e^{2.6415} \approx 14.04
+\]
+
+\textbf{Nota importante:} Este resultado parece extremadamente grande porque si el PMI sube 1.5 puntos por mes durante 3 meses, el modelo predice un incremento del $1{,}304\%$ en el precio, lo cual es irrealista. El ejercicio ilustra que los coeficientes SARIMAX deben interpretarse en las unidades exactas de medición de $x_t$; en la práctica, $\Delta x_{2t}$ usualmente es una fracción de punto.
+
+% ── Inciso c ─────────────────────────────────────────────────────────────────
+\begin{cajaInciso}{c}
+¿Cómo afectaría la endogeneidad del PMI a la consistencia de $\hat{\beta}_2$? Proponga un método de corrección.
+\end{cajaInciso}
+
+\textbf{Solución.}
+
+Si el precio del petróleo influye sobre el PMI (plausible: un alza en el petróleo encarece insumos y reduce la actividad manufacturera), entonces $\Cov(x_{2t}, \eps_t)\neq 0$, violando la exogeneidad estricta. La consecuencia es que $\hat{\beta}_2$ es un estimador \textbf{inconsistente}: sesgado incluso con $n\to\infty$, pues confunde el efecto del PMI sobre el petróleo con el efecto del petróleo sobre el PMI.
+
+\textbf{Corrección: Variables Instrumentales (IV) / 2SLS.}
+
+Se busca un instrumento $w_t$ que:
+\begin{enumerate}[leftmargin=*]
+  \item Sea relevante: $\Cov(w_t, x_{2t})\neq 0$.
+  \item Sea exógeno: $\Cov(w_t, \eps_t)=0$.
+\end{enumerate}
+
+Un instrumento candidato es el PMI de China rezagado un periodo, ya que China determina buena parte de la demanda industrial global y el rezago rompe la simultaneidad. El procedimiento 2SLS: (1) regresar $x_{2t}$ sobre $w_t$ para obtener $\hat{x}_{2t}$; (2) usar $\hat{x}_{2t}$ en lugar de $x_{2t}$ en el SARIMAX.
+
+% ── Inciso d ─────────────────────────────────────────────────────────────────
+\begin{cajaInciso}{d}
+Discuta si conviene añadir los residuales del SARIMAX como regresores en un GARCH sobre esos mismos residuales. ¿Viola algún supuesto del modelo de dos etapas?
+\end{cajaInciso}
+
+\textbf{Solución.}
+
+\textbf{No es válido directamente.} El GARCH ya incorpora $\eps_{t-1}^2$ (cuadrados de los residuales) en su especificación estándar. Añadir $\hat{\eps}_{t-1}$ (no cuadrado) en la ecuación de la varianza sería análogo a incluir el choque estandarizado con signo, que es precisamente lo que hace el EGARCH. No hay ningún beneficio en incluir los residuales del SARIMAX como regresores adicionales en el GARCH estándar.
+
+\textbf{Violación de supuestos:} Si añadimos $\hat{\eps}_{t-1}$ (que contiene error de estimación del SARIMAX) como regresores en el GARCH, introducimos un sesgo de \emph{variables generadas} (generated regressors), lo que invalida los errores estándar de los parámetros GARCH y complica la inferencia.
+
+\begin{cajaHallazgo}
+La arquitectura correcta es: SARIMAX $\to$ obtener $\hat{\eps}_t$ $\to$ GARCH sobre $\hat{\eps}_t$. No se deben añadir los residuales como regresores dentro del propio GARCH, pues introduce circularidad y sesgo de variables generadas.
+\end{cajaHallazgo}
+
+% ─────────────────────────────────────────────────────────────────────────────
+\subsection*{Ejercicio 10 \texorpdfstring{$\cdot$}{·} Selección de modelo y pronóstico de volatilidad}
+\addcontentsline{toc}{subsection}{Ejercicio 10: Selección de modelo GARCH}
+% ─────────────────────────────────────────────────────────────────────────────
+
+\begin{center}
+\begin{tabular}{@{}lcccc@{}}
+\toprule
+Modelo & AIC & BIC & Params & LB$(\hat{z}^2)$ $p$ \\
+\midrule
+GARCH(1,1) Normal      & 3241.80 & 3258.40 & 4 & 0.431 \\
+GARCH(1,1) $t$         & 3228.50 & 3249.60 & 5 & 0.512 \\
+EGARCH(1,1) $t$        & 3226.10 & 3251.60 & 6 & 0.498 \\
+GJR-GARCH(1,1,1) $t$   & 3224.30 & 3253.30 & 7 & 0.487 \\
+GARCH(2,2) Normal      & 3239.60 & 3278.50 & 6 & 0.391 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+% ── Inciso a ─────────────────────────────────────────────────────────────────
+\begin{cajaInciso}{a}
+¿Qué modelo elegiría por AIC? ¿Y por BIC? Explique por qué pueden divergir.
+\end{cajaInciso}
+
+\textbf{Solución.}
+
+\textbf{Por AIC:} Se elige el modelo con menor AIC: \textbf{GJR-GARCH(1,1,1)-$t$} con AIC $=3{,}224.30$.
+
+\textbf{Por BIC:} Se elige el modelo con menor BIC: \textbf{GARCH(1,1)-$t$} con BIC $=3{,}249.60$.
+
+\textbf{¿Por qué divergen?}
+\[
+\text{AIC} = -2\ell + 2k \qquad \text{BIC} = -2\ell + k\ln(n)
+\]
+
+La penalización del BIC ($k\ln n$) crece con $n$, por lo que en muestras grandes penaliza más fuertemente los modelos con más parámetros. Verificando los valores de la tabla: GARCH(1,1)-$t$ tiene BIC $=3{,}249.60$ (5 parámetros), EGARCH(1,1)-$t$ tiene BIC $=3{,}251.60$ (6 parámetros), y GJR-GARCH(1,1,1)-$t$ tiene BIC $=3{,}253.30$ (7 parámetros). El GARCH(1,1)-$t$ resulta ganador por BIC, ya que su menor complejidad paramétrica supera con creces la mejora marginal de ajuste de los modelos asimétricos. El AIC favorece al GJR-GARCH-$t$ (mayor flexibilidad, penalización más leve); el BIC favorece al GARCH(1,1)-$t$ (mayor parsimonia, penalización más severa).
+
+% ── Inciso b ─────────────────────────────────────────────────────────────────
+\begin{cajaInciso}{b}
+El GARCH(2,2) tiene AIC mayor al GARCH(1,1) Normal con más parámetros. ¿Qué implica sobre la utilidad de los rezagos adicionales?
+\end{cajaInciso}
+
+\textbf{Solución.}
+
+El GARCH(2,2) Normal tiene AIC $=3{,}239.60$, que es ligeramente menor que el GARCH(1,1) Normal con AIC $=3{,}241.80$ (una mejora marginal de 2.2 unidades con 2 parámetros adicionales). Sin embargo, el GARCH(2,2) Normal tiene AIC significativamente mayor que todos los modelos con distribución $t$-Student.
+
+La conclusión es doble:
+\begin{enumerate}[leftmargin=*]
+  \item Los rezagos adicionales del GARCH(2,2) aportan una mejora mínima sobre el GARCH(1,1) bajo la misma distribución normal.
+  \item Cambiar la distribución de normal a $t$-Student (un solo parámetro adicional, $\nu$) genera una mejora de AIC de $3{,}241.80 - 3{,}228.50 = 13.3$ unidades, mucho mayor.
+\end{enumerate}
+
+\textbf{Principio de parsimonia:} es más eficiente modelar mejor las colas de la distribución que añadir más rezagos al modelo de varianza.
+
+% ── Inciso c ─────────────────────────────────────────────────────────────────
+\begin{cajaInciso}{c}
+Todos los modelos tienen LB$(\hat{z}^2)$ $p>0.05$. ¿Qué concluye sobre la familia GARCH para estos datos?
+\end{cajaInciso}
+
+\textbf{Solución.}
+
+Que el Ljung-Box sobre $\hat{z}_t^2$ no rechaza $H_0$ en ningún modelo significa que \textbf{cualquier especificación GARCH de la tabla captura adecuadamente la heterocedasticidad condicional}. No hay autocorrelación residual en los cuadrados de los residuales estandarizados.
+
+Conclusión global: la familia GARCH es adecuada para estos datos. La elección entre modelos específicos debe basarse en AIC/BIC para selección, capacidad de capturar asimetría (prueba de Engle-Ng) y distribución de innovaciones (Jarque-Bera). El hecho de que todos pasen el LB$(\hat{z}^2)$ confirma que el clustering de volatilidad está siendo capturado en todos los casos.
+
+% ── Inciso d ─────────────────────────────────────────────────────────────────
+\begin{cajaInciso}{d}
+Pronostique $\hat{\sigma}^2_{t+k}$ a 5 días para GARCH(1,1)-$t$, dados $\hat{\sigma}^2_{t+1}=0.0025$, $\sigmabar=0.0018$ y $\hat{\alpha}+\hat{\beta}=0.963$.
+\end{cajaInciso}
+
+\textbf{Solución.}
+
+Usando la fórmula de pronóstico iterativo:
+\[
+\E_t[\sigma^2_{t+k}] = \sigmabar + (\hat{\alpha}+\hat{\beta})^{k-1}(\hat{\sigma}^2_{t+1} - \sigmabar)
+\]
+
+Con $\sigmabar=0.0018$, $\hat{\sigma}^2_{t+1}=0.0025$, $\rho=0.963$:
+
+\begin{center}
+\begin{tabular}{@{}cccc@{}}
+\toprule
+Horizonte $k$ & $\rho^{k-1}$ & $\rho^{k-1}\times 0.0007$ & $\E_t[\sigma^2_{t+k}]$ \\
+\midrule
+1 & $1.000\,000\,0$ & $0.000\,700\,0$ & $0.002\,500\,000\,0$ \\
+2 & $0.963\,000\,0$ & $0.000\,674\,1$ & $0.002\,474\,100\,0$ \\
+3 & $0.927\,369\,0$ & $0.000\,649\,2$ & $0.002\,449\,158\,3$ \\
+4 & $0.893\,056\,5$ & $0.000\,625\,1$ & $0.002\,425\,139\,4$ \\
+5 & $0.860\,013\,5$ & $0.000\,602\,0$ & $0.002\,402\,009\,3$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+La varianza condicional desciende desde $0.002\,500$ hacia $\sigmabar=0.0018$ a medida que el horizonte aumenta, revirtiendo gradualmente a la varianza de largo plazo. La velocidad de reversión está gobernada por $\rho=0.963$ por periodo.
+
+% ── Inciso e ─────────────────────────────────────────────────────────────────
+\begin{cajaInciso}{e}
+Desde Basilea III, ¿cuál modelo recomendaría para el VaR al 99\% a 10 días?
+\end{cajaInciso}
+
+\textbf{Solución.}
+
+\textbf{Recomendación: GARCH(1,1)-$t$ como base; GJR-GARCH(1,1,1)-$t$ si hay evidencia de asimetría.}
+
+\textbf{Justificación desde Basilea III:}
+\begin{enumerate}[leftmargin=*]
+  \item \textbf{Colas pesadas:} Basilea III reconoce que las distribuciones financieras tienen colas más pesadas que la normal. Los modelos con distribución $t$-Student capturan esto mejor.
+  \item \textbf{Captura de clustering:} el GARCH modela la heterocedasticidad condicional, requerida para capturar periodos de alta volatilidad (stress periods).
+  \item \textbf{Parsimonia y robustez:} el GARCH(1,1)-$t$ tiene la mejor relación AIC/parsimonia y es el modelo más probado en la literatura para aplicaciones regulatorias.
+  \item \textbf{Asimetría:} si el backtesting detecta efecto apalancamiento (prueba Negative-Size-Bias significativa), preferir GJR-GARCH(1,1,1)-$t$ para capturar el mayor impacto de las caídas.
+\end{enumerate}
+
+\begin{cajaHallazgo}
+Para cumplimiento de Basilea III: \textbf{GARCH(1,1)-$t$} como base robusta y parsimoniosa. Si la prueba de Negative-Size-Bias es significativa, escalar a \textbf{GJR-GARCH(1,1,1)-$t$} para capturar el efecto apalancamiento, especialmente relevante en carteras con activos de crédito o renta variable en periodos de estrés.
+\end{cajaHallazgo}
+
+% ══════════════════════════════════════════════════════════════════════════════
+\newpage
+\section{Parte B -- Preguntas estilo CFA (opción múltiple)}
+% ══════════════════════════════════════════════════════════════════════════════
+
+\textbf{Instrucciones.} Una sola respuesta correcta por pregunta. Formato CFA Level III -- Gestión de Portafolios y Riesgo Cuantitativo.
+
+% ─────────────────────────────────────────────────────────────────────────────
+\begin{cajaCFA}{11}
+Un analista observa que los log-rendimientos de un portafolio presentan ACF no significativa en todos los rezagos, pero ACF significativa y positiva en $r_t^2$ a los rezagos 1, 5 y 10. ¿Cuál es la inferencia más apropiada?
+\end{cajaCFA}
+
+\textbf{Respuesta correcta: B.}
+
+Los rendimientos exhiben heterocedasticidad condicional (efecto ARCH): un modelo GARCH es apropiado para la varianza condicional.
+
+\textbf{Justificación:} La ausencia de autocorrelación en $r_t$ indica que la dirección del rendimiento no es predecible (eficiencia débil en media). La autocorrelación significativa en $r_t^2$ indica que la magnitud (varianza) sí es predecible, lo cual es la firma característica del efecto ARCH. Un modelo GARCH captura esta dependencia en los segundos momentos sin violar la eficiencia en media.
+
+\textbf{Descartes:} A es incorrecta: si $r_t^2$ tiene autocorrelación, los rendimientos no pueden ser i.i.d. C es incorrecta: no hay autocorrelación en $r_t$, por lo que no se requiere modelo ARMA para la media. D es incorrecta: una caminata aleatoria con tendencia generaría autocorrelación positiva en $r_t$, no solo en $r_t^2$.
+
+% ─────────────────────────────────────────────────────────────────────────────
+\begin{cajaCFA}{12}
+El GARCH(1,1) para EUR/USD produce $\hat{\alpha}=0.08$ y $\hat{\beta}=0.91$. Un gestor afirma que la volatilidad revertirá rápidamente a su media tras un choque. ¿Es correcta esta afirmación?
+\end{cajaCFA}
+
+\textbf{Respuesta correcta: B.}
+
+No; la persistencia $\hat{\alpha}+\hat{\beta}=0.99$ implica reversión muy lenta: los choques tardan muchos periodos en disiparse.
+
+\textbf{Justificación:} La velocidad de reversión a la media de la varianza depende de $1-(\alpha+\beta)=0.01$. La vida media de un choque es $\ln(0.5)/\ln(0.99)\approx 69$ días hábiles, lo que indica una volatilidad altamente persistente. La afirmación del gestor es incorrecta.
+
+\textbf{Descartes:} A es incorrecta: $\hat{\alpha}$ pequeño indica baja reactividad a nuevos choques, pero no implica reversión rápida si $\hat{\beta}$ es alto. C es incorrecta: $\hat{\beta}>0.90$ garantiza una contribución persistente de la varianza pasada, lo opuesto a reversión rápida. D es incorrecta: para reversión rápida se necesita $\hat{\alpha}+\hat{\beta}\ll 1$ (próximo a cero), no mayor que 1.
+
+% ─────────────────────────────────────────────────────────────────────────────
+\begin{cajaCFA}{13}
+Al comparar EGARCH(1,1) con GARCH(1,1), ¿cuál afirmación es más precisa?
+\end{cajaCFA}
+
+\textbf{Respuesta correcta: B.}
+
+El EGARCH modela $\log\sigmat$ sin restricciones de signo y captura asimetría en el impacto de innovaciones positivas y negativas.
+
+\textbf{Justificación:} La especificación logarítmica del EGARCH elimina la necesidad de restricciones de no-negatividad en los parámetros, y el término $\gamma z_{t-1}$ (choque estandarizado con signo) permite capturar el efecto apalancamiento.
+
+\textbf{Descartes:} A es incorrecta: precisamente la ventaja del EGARCH es que no requiere esas restricciones de signo. C es incorrecta: un modelo con más parámetros puede tener AIC mayor si la mejora en log-verosimilitud no compensa la penalización. D es incorrecta: los pronósticos divergen especialmente ante choques grandes donde la asimetría es relevante.
+
+% ─────────────────────────────────────────────────────────────────────────────
+\begin{cajaCFA}{14}
+Un fondo estima VaR diario al 99\% con GARCH(1,1)-$t$ ($\nu=5$): VaR $=\$2.1M$. Con varianza histórica constante (250 días): VaR $=\$1.6M$. ¿Por qué el VaR-GARCH es mayor?
+\end{cajaCFA}
+
+\textbf{Respuesta correcta: B.}
+
+Porque la volatilidad condicional actual supera la volatilidad histórica promedio: sucede en periodos de alta tensión de mercado.
+
+\textbf{Justificación:} El GARCH utiliza la volatilidad condicional del momento actual ($\hat{\sigma}_t$), que en periodos de estrés puede ser significativamente mayor que la volatilidad histórica promedio (usada por el VaR histórico). El uso de la distribución $t$ también contribuye a través de colas más pesadas.
+
+\textbf{Descartes:} A es incorrecta: el GARCH no es sistemáticamente conservador; en periodos de calma, el VaR-GARCH puede ser menor que el histórico. C es incorrecta: la $t$-Student tiene colas más \emph{pesadas} (no delgadas) que la normal, lo que eleva el VaR. D es incorrecta: el VaR histórico sí incorpora implícitamente la correlación serial, ya que usa la distribución empírica directa de los retornos pasados.
+
+% ─────────────────────────────────────────────────────────────────────────────
+\begin{cajaCFA}{15}
+Un analista incluye el VIX como variable exógena $x_t$ en un SARIMAX para rendimientos de un portafolio de opciones. ¿Cuál supuesto es el más crítico para la validez del modelo?
+\end{cajaCFA}
+
+\textbf{Respuesta correcta: B.}
+
+El VIX debe ser estrictamente exógeno: $\Cov(x_t, \eps_s)=0$ para todo $t, s$, sin retroalimentación del portafolio hacia el VIX.
+
+\textbf{Justificación:} La exogeneidad estricta es el supuesto central que garantiza la consistencia del estimador $\hat{\beta}$. En el contexto de un portafolio de opciones, las operaciones individuales del portafolio no tienen poder de mercado suficiente para mover el VIX global, lo que hace plausible (aunque no garantizado) este supuesto.
+
+\textbf{Descartes:} A es incorrecta: los modelos SARIMAX no requieren que los regresores exógenos sigan distribución normal. C es incorrecta: si el VIX no es estacionario, se puede diferenciar antes de incluirlo. D es incorrecta: en un SARIMAX, variable dependiente y exógenas pueden tener órdenes de integración diferentes, siempre que el residuo resultante sea estacionario.
+
+% ─────────────────────────────────────────────────────────────────────────────
+\begin{cajaCFA}{16}
+La prueba de Ljung-Box sobre $\hat{z}_t^2$ de un GARCH arroja $p$-valor $=0.002$. ¿Cuál es la conclusión correcta?
+\end{cajaCFA}
+
+\textbf{Respuesta correcta: B.}
+
+El GARCH no capturó toda la estructura de la varianza: persiste autocorrelación en $\hat{z}_t^2$; conviene incrementar los órdenes o cambiar la especificación.
+
+\textbf{Justificación:} Un $p$-valor $=0.002<0.05$ lleva a rechazar $H_0$ de ausencia de autocorrelación en los residuales estandarizados al cuadrado. Esto indica que el modelo GARCH actual no ha absorbido toda la heterocedasticidad condicional: hay estructura de varianza remanente que el modelo no explica. La solución puede ser incrementar los órdenes o usar una especificación asimétrica.
+
+\textbf{Descartes:} A es incorrecta: el rechazo de $H_0$ implica lo contrario, que los residuos no son ruido blanco en varianza. C es incorrecta: la prueba LB sobre $\hat{z}_t^2$ evalúa dependencia temporal en la varianza, no la forma de la distribución. D es incorrecta: la no estacionariedad en media se detecta con pruebas ADF sobre la serie original, no con autocorrelación de residuos cuadráticos.
+
+% ─────────────────────────────────────────────────────────────────────────────
+\begin{cajaCFA}{17}
+El GARCH-M especifica $r_t = \mu + \delta\sigma_t + \eps_t$. ¿Cuál es la interpretación financiera de $\hat{\delta}>0$ significativo?
+\end{cajaCFA}
+
+\textbf{Respuesta correcta: A.}
+
+Existe una prima de riesgo positiva: los inversionistas exigen mayor retorno cuando la volatilidad condicional es mayor, consistente con la teoría de portafolios.
+
+\textbf{Justificación:} $\hat{\delta}>0$ significa que el rendimiento esperado condicional aumenta cuando la volatilidad aumenta, formalizando la relación riesgo-retorno positiva de la teoría moderna de portafolios. Los inversionistas aversos al riesgo exigen compensación adicional en periodos de mayor incertidumbre.
+
+\textbf{Descartes:} B es incorrecta: $\hat{\delta}>0$ establece una relación positiva entre riesgo y rendimiento, opuesto a reversión negativa. C es incorrecta: el GARCH-M es matemáticamente válido y específicamente diseñado para que $\sigma_t$ ingrese en la ecuación de la media. D es incorrecta: la predictibilidad de la media basada en el nivel de riesgo no viola la eficiencia débil, ya que el rendimiento adicional solo compensa el riesgo asumido, no ofrece ganancias de arbitraje.
+
+% ─────────────────────────────────────────────────────────────────────────────
+\begin{cajaCFA}{18}
+Al elegir entre GARCH(1,1) Normal (AIC $=3241.8$) y GARCH(1,1)-$t$ (AIC $=3228.5$), ¿cuál afirmación es correcta?
+\end{cajaCFA}
+
+\textbf{Respuesta correcta: B.}
+
+Se prefiere el modelo $t$: AIC menor indica que la mejora en ajuste por colas pesadas compensa el parámetro adicional $\nu$.
+
+\textbf{Justificación:} El AIC $=3228.5$ del modelo $t$ es $13.3$ unidades menor que el del modelo normal. Esta diferencia sustancial indica que la ganancia en log-verosimilitud por capturar las colas pesadas de los datos mediante la $t$-Student compensa con creces la penalización por el parámetro adicional $\nu$.
+
+\textbf{Descartes:} A es incorrecta: la parsimonia se prefiere solo si el modelo más complejo no mejora significativamente el ajuste, lo cual no ocurre aquí. C es incorrecta: los criterios AIC y BIC basados en log-verosimilitud son perfectamente comparables entre modelos con diferentes distribuciones, siempre que la variable dependiente sea la misma. D es incorrecta: el AIC es un criterio válido independientemente del tamaño muestral.
+
+% ─────────────────────────────────────────────────────────────────────────────
+\begin{cajaCFA}{19}
+Bajo Basilea III, un analista propone VaR$_{10}$ $=$ VaR$_1 \times\sqrt{10}$ con un modelo GARCH. ¿Cuál es la limitación principal?
+\end{cajaCFA}
+
+\textbf{Respuesta correcta: A.}
+
+La regla es exacta para rendimientos i.i.d.\ normales pero, con clustering GARCH, la volatilidad no es constante: los pronósticos multi-periodo deben iterarse con la ecuación de varianza del GARCH, no escalarse con $\sqrt{h}$.
+
+\textbf{Justificación:} La regla $\sqrt{h}$ asume que la varianza de los próximos $h$ periodos es $h$ veces la varianza de un periodo, lo cual solo es correcto para procesos i.i.d. Con un proceso GARCH, la varianza condicional es heterogénea: si la volatilidad actual está por encima de la media (como ocurre en crisis), el GARCH predice reversión y la varianza acumulada a 10 días será menor que $10\times\hat{\sigma}_t^2$. La regla sobreestimaría el riesgo en ese caso.
+
+\textbf{Descartes:} B es incorrecta: la limitación fundamental reside en ignorar la dinámica temporal de la varianza, que persiste independientemente de si se usa distribución normal o $t$-Student. C es incorrecta: el VaR puede ser subditivo bajo distribuciones elípticas; el problema es de dependencia temporal, no de agregación transversal. D es incorrecta: Basilea III no restringe los GARCH a ventanas de exactamente 250 días.
+
+% ─────────────────────────────────────────────────────────────────────────────
+\begin{cajaCFA}{20}
+Un portafolio de bonos soberanos con SARIMAX$(0,1,1)(1,1,0)_{12}$ produce residuales con Jarque-Bera significativo (curtosis $=6.8$) y Ljung-Box no significativo. ¿Cuál es el siguiente paso más adecuado?
+\end{cajaCFA}
+
+\textbf{Respuesta correcta: C.}
+
+Mantener el SARIMAX para la media y reestimar con quasi-MV (QML) o distribución $t$-Student para obtener inferencia válida bajo colas pesadas.
+
+\textbf{Justificación:} El Ljung-Box no significativo confirma que la especificación de la media condicional es correcta (sin autocorrelación residual). El Jarque-Bera significativo con curtosis $=6.8$ indica colas pesadas en los residuales, lo que invalida los errores estándar basados en normalidad. La solución es reestimar con distribución $t$-Student o usar estimadores QML de Bollerslev-Wooldridge, que son robustos a desviaciones de la normalidad.
+
+\textbf{Descartes:} A es incorrecta: incrementar $p$ y $q$ corrige problemas de correlación serial en la media (inexistente aquí según LB). B es incorrecta: ignorar el JB destruye la validez de los errores estándar clásicos, invalidando pruebas $t$ e intervalos de confianza. D es incorrecta: añadir diferenciación estacional adicional ($D=2$) alteraría artificialmente la estructura de raíces unitarias sin resolver el exceso de curtosis.
+
+% ── Pie de página ─────────────────────────────────────────────────────────────
+\vspace{12pt}
+\noindent\color{azulUP}\rule{\linewidth}{0.8pt}
+
+\begin{center}
+{\small\itshape\color{moradoUP}
+Soluciones elaboradas con fines pedagógicos para el curso de Análisis de Series de Tiempo \\
+Universidad Panamericana $\cdot$ Ciudad UP $\cdot$ Finanzas Cuantitativas $\cdot$ $7^\circ$ semestre \\[4pt]
+\textbf{Elaboraron:} Guillermo García Ramos de la Rosa \quad$\cdot$\quad Iñaki Castillo y Osante
+}
+\end{center}
+
+\end{document}
